@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>修仙世界 · 重来一世</title>
 <style>
 :root{--paper:#f7f2e6;--paper-2:#fdfaf1;--paper-3:#efe7d5;--paper-dk:#e6dcc4;--wood:#6b4a2b;--wood-lt:#8b6f47;--wood-dk:#4a3320;--wood-hi:#c9a96e;--ink:#3a2e1e;--ink-2:#5a4a30;--ink-dim:#8b7355;--gold:#a67c00;--cinnabar:#a8342a;--jade:#4a7a4a;--blue:#2c5a80;--purple:#6b4a80}
@@ -23,6 +23,22 @@ body::before{content:'';position:fixed;inset:0;background-image:repeating-linear
 .story-btn{display:block;margin:0 auto;padding:14px 56px 14px 66px;background:linear-gradient(160deg,#8b6f47,#6b4a2b);border:2px solid var(--wood-dk);color:#fdfaf1;font-family:inherit;font-size:17px;letter-spacing:10px;cursor:pointer;transition:all .35s}
 .story-btn:hover:not(:disabled){background:linear-gradient(160deg,#a8875c,#8b6f47);transform:translateY(-1px)}
 .story-btn:disabled{opacity:.4;cursor:not-allowed}
+/* ===== 主线剧情专用层（独立于功能弹窗） ===== */
+#storyLayer{position:fixed;inset:0;background:rgba(10,8,5,.85);display:none;align-items:center;justify-content:center;z-index:900;padding:20px;backdrop-filter:blur(6px)}
+#storyLayer.active{display:flex}
+.story-panel{max-width:720px;width:100%;background:linear-gradient(165deg,var(--paper-2),var(--paper));border:5px double var(--wood);outline:1px solid var(--wood-hi);outline-offset:-10px;box-shadow:0 0 80px rgba(0,0,0,.8);padding:32px 28px;position:relative}
+.story-panel::before,.story-panel::after{content:'';position:absolute;width:24px;height:24px;border:2px solid var(--wood)}
+.story-panel::before{top:6px;left:6px;border-right:none;border-bottom:none}
+.story-panel::after{bottom:6px;right:6px;border-left:none;border-top:none}
+.story-panel-title{text-align:center;font-size:15px;color:var(--wood-dk);letter-spacing:8px;padding-bottom:14px;margin-bottom:20px;border-bottom:1px solid var(--wood-lt);font-weight:bold}
+.story-panel-body{min-height:180px;padding:20px 24px;background:rgba(255,253,247,.85);border:2px solid var(--wood-lt);font-size:16px;line-height:2.2;color:var(--ink-2);letter-spacing:1px;position:relative}
+.story-panel-body .speaker{display:block;font-size:14px;color:var(--cinnabar);letter-spacing:4px;margin-bottom:10px;font-weight:bold;text-shadow:0 0 8px rgba(168,52,42,.3)}
+.story-panel-choices{margin-top:20px;display:flex;flex-direction:column;gap:10px}
+.story-choice{padding:14px 20px;background:linear-gradient(160deg,var(--paper-2),var(--paper-3));border:2px solid var(--wood-lt);color:var(--wood-dk);font-family:inherit;font-size:15px;letter-spacing:2px;cursor:pointer;transition:all .3s;text-align:left}
+.story-choice:hover{border-color:var(--cinnabar);color:var(--cinnabar);transform:translateX(4px);background:rgba(168,52,42,.05)}
+.story-next{padding:10px 36px;background:linear-gradient(160deg,#8b6f47,#6b4a2b);border:2px solid var(--wood-dk);color:#fdfaf1;font-family:inherit;font-size:14px;letter-spacing:6px;cursor:pointer;transition:all .3s;display:block;margin:20px auto 0}
+.story-next:hover{background:linear-gradient(160deg,#a8875c,#8b6f47)}
+/* ===== 姓名输入 ===== */
 #nameModal{position:fixed;inset:0;background:rgba(58,46,30,.55);display:none;align-items:center;justify-content:center;z-index:1001;padding:20px}
 #nameModal.active{display:flex}
 .name-box{max-width:520px;width:100%;background:linear-gradient(165deg,var(--paper-2),var(--paper));border:6px double var(--wood);outline:1px solid var(--wood-hi);outline-offset:-12px;padding:40px;max-height:92vh;overflow-y:auto}
@@ -40,13 +56,13 @@ body::before{content:'';position:fixed;inset:0;background-image:repeating-linear
 .name-preview .lbl{font-size:11px;color:var(--ink-dim);letter-spacing:3px}
 .name-preview .val{font-size:18px;color:var(--cinnabar);letter-spacing:4px;margin-top:6px;font-weight:bold}
 .name-preview .nick{font-size:12px;color:var(--ink-dim);margin-top:5px}
+/* ===== 主界面 ===== */
 #game{display:none;max-width:980px;margin:0 auto;padding:20px 18px 40px;position:relative;z-index:1}
 .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding:16px 20px;background:linear-gradient(165deg,var(--paper-2),var(--paper-3));border:4px double var(--wood);outline:1px solid var(--wood-hi);outline-offset:-8px}
 .title-block h1{font-size:26px;color:var(--wood-dk);letter-spacing:12px;font-weight:normal;padding-left:12px}
 .title-block .subtitle{font-size:11px;color:var(--ink-dim);letter-spacing:5px;margin-top:4px;padding-left:12px}
 .header-right{display:flex;align-items:center;gap:12px}
 .day-badge{font-size:13px;color:var(--ink-dim);letter-spacing:2px;padding:8px 14px;border:2px solid var(--wood-lt);background:var(--paper-2)}
-.day-badge span{color:var(--cinnabar);font-size:16px;font-weight:bold}
 .refresh-btn{width:42px;height:42px;background:var(--paper-2);border:2px solid var(--wood-lt);color:var(--wood);font-size:20px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center}
 .refresh-btn:hover{border-color:var(--wood);transform:rotate(180deg)}
 .status-bar{display:flex;flex-wrap:wrap;border:2px solid var(--wood);background:var(--paper-2);margin-bottom:10px}
@@ -78,10 +94,12 @@ body::before{content:'';position:fixed;inset:0;background-image:repeating-linear
 .log-entry.info{color:var(--wood-dk)}
 .log-entry.system{color:var(--ink-dim);font-style:italic}
 .log-entry.loot{color:var(--gold)}
+.log-entry.story{color:var(--purple);font-weight:bold}
 .footer-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .small-btn{padding:12px 8px;background:linear-gradient(165deg,var(--paper-2),var(--paper-3));border:2px solid var(--wood-lt);color:var(--wood-dk);font-family:inherit;font-size:12.5px;letter-spacing:2px;cursor:pointer;transition:all .3s}
 .small-btn:hover{border-color:var(--wood);transform:translateY(-1px)}
 .small-btn.danger{color:var(--cinnabar);border-color:var(--cinnabar)}
+/* ===== 通用弹窗 ===== */
 .modal-overlay{position:fixed;inset:0;background:rgba(58,46,30,.5);display:none;align-items:center;justify-content:center;z-index:600;padding:20px;backdrop-filter:blur(4px)}
 .modal-overlay.active{display:flex}
 .modal-content{max-width:680px;width:100%;max-height:88vh;overflow-y:auto;background:linear-gradient(165deg,var(--paper-2),var(--paper));border:5px double var(--wood);outline:1px solid var(--wood-hi);outline-offset:-10px;padding:26px 24px;position:relative}
@@ -246,15 +264,13 @@ body::before{content:'';position:fixed;inset:0;background-image:repeating-linear
 .tag-mid{color:#4a7a4a;border-color:#4a7a4a}
 .tag-high{color:#2c5a80;border-color:#2c5a80}
 .tag-supreme{color:#a8342a;border-color:#a8342a}
-.tag-mortal{color:#8b7355;border-color:#8b7355}
 .tag-special{color:#6b4a80;border-color:#6b4a80}
 .tag-yinyang{color:#a67c00;border-color:#a67c00}
-.tox-bar{height:8px;background:rgba(230,220,196,.6);border:1px solid #8b3a3a;overflow:hidden;margin-top:3px}
-.tox-fill{height:100%;background:linear-gradient(90deg,#4a7a4a,#a67c00,#8b3a3a)}
 </style>
 </head>
 <body>
 
+<!-- ========== 开场剧情 ========== -->
 <div id="storyModal">
   <div class="story-box">
     <div class="story-title">前 世 之 殇</div>
@@ -265,6 +281,7 @@ body::before{content:'';position:fixed;inset:0;background-image:repeating-linear
   </div>
 </div>
 
+<!-- ========== 姓名输入 ========== -->
 <div id="nameModal">
   <div class="name-box">
     <div class="name-title">请 问 道 友</div>
@@ -282,6 +299,17 @@ body::before{content:'';position:fixed;inset:0;background-image:repeating-linear
   </div>
 </div>
 
+<!-- ========== 主线剧情层（独立） ========== -->
+<div id="storyLayer">
+  <div class="story-panel">
+    <div class="story-panel-title" id="storyPanelTitle">剧 情</div>
+    <div class="story-panel-body" id="storyPanelBody"></div>
+    <div class="story-panel-choices" id="storyPanelChoices"></div>
+    <button class="story-next" id="storyPanelNext" style="display:none" onclick="storyNext()">继 续</button>
+  </div>
+</div>
+
+<!-- ========== 主界面 ========== -->
 <div id="game">
   <div class="header">
     <div class="title-block"><h1>修 仙 世 界</h1><div class="subtitle">重 来 一 世</div></div>
@@ -324,20 +352,26 @@ body::before{content:'';position:fixed;inset:0;background-image:repeating-linear
 <div id="toast"></div>
 
 <script>
-/* ========== 境界 ========== */
+/* ============================================================
+   一、境界体系
+   ============================================================ */
 const REALMS=[{name:'凡人',sub:'',baseExp:100},{name:'练气',sub:'一层',baseExp:200},{name:'练气',sub:'二层',baseExp:350},{name:'练气',sub:'三层',baseExp:550},{name:'练气',sub:'四层',baseExp:800},{name:'练气',sub:'五层',baseExp:1100},{name:'练气',sub:'六层',baseExp:1450},{name:'练气',sub:'七层',baseExp:1850},{name:'练气',sub:'八层',baseExp:2300},{name:'练气',sub:'九层',baseExp:2800},{name:'练气',sub:'十层',baseExp:3400},{name:'练气',sub:'十一层',baseExp:4100},{name:'练气',sub:'十二层',baseExp:5000},{name:'练气',sub:'十三层',baseExp:8000},{name:'筑基',sub:'初期',baseExp:12000},{name:'筑基',sub:'中期',baseExp:18000},{name:'筑基',sub:'后期',baseExp:26000},{name:'筑基',sub:'大圆满',baseExp:40000},{name:'结丹',sub:'初期',baseExp:60000},{name:'结丹',sub:'中期',baseExp:90000},{name:'结丹',sub:'后期',baseExp:130000},{name:'结丹',sub:'大圆满',baseExp:200000},{name:'元婴',sub:'初期',baseExp:300000},{name:'元婴',sub:'中期',baseExp:450000},{name:'元婴',sub:'后期',baseExp:650000},{name:'元婴',sub:'大圆满',baseExp:1000000},{name:'化神',sub:'初期',baseExp:1500000},{name:'化神',sub:'中期',baseExp:2200000},{name:'化神',sub:'后期',baseExp:3200000},{name:'化神',sub:'大圆满',baseExp:5000000},{name:'炼虚',sub:'初期',baseExp:7500000},{name:'炼虚',sub:'中期',baseExp:11000000},{name:'炼虚',sub:'后期',baseExp:16000000},{name:'炼虚',sub:'大圆满',baseExp:25000000},{name:'合体',sub:'初期',baseExp:38000000},{name:'合体',sub:'中期',baseExp:55000000},{name:'合体',sub:'后期',baseExp:80000000},{name:'合体',sub:'大圆满',baseExp:120000000},{name:'大乘',sub:'初期',baseExp:180000000},{name:'大乘',sub:'中期',baseExp:270000000},{name:'大乘',sub:'后期',baseExp:400000000},{name:'大乘',sub:'大圆满',baseExp:600000000}];
 const BREAKTHROUGH_RATES={凡人:100,练气:100,筑基:80,结丹:65,元婴:50,化神:38,炼虚:28,合体:20,大乘:12};
 const YAO_REALMS=[{name:'聚灵',desc:'感应天地灵气'},{name:'通智',desc:'开启灵智'},{name:'锻体',desc:'淬炼身体'},{name:'炼骨',desc:'骨骼强化'},{name:'妖丹',desc:'凝结内丹'},{name:'化形',desc:'可化人形'},{name:'凝魄',desc:'凝聚魂魄'},{name:'妖将',desc:'威震一方'},{name:'妖王',desc:'妖族之王'},{name:'破虚',desc:'突破空间'},{name:'渡劫',desc:'面临天劫'}];
 const SHICHEN=[{name:'子时',period:'夜半',tip:'宜打坐修炼'},{name:'丑时',period:'鸡鸣',tip:'宜打坐修炼'},{name:'寅时',period:'平旦',tip:'宜打坐修炼'},{name:'卯时',period:'日出',tip:'宜打坐修炼 · 可解毒'},{name:'辰时',period:'食时',tip:'宜出门历练'},{name:'巳时',period:'隅中',tip:'宜出门历练'},{name:'午时',period:'日中',tip:'宜修炼突破'},{name:'未时',period:'日昳',tip:'宜修炼突破'},{name:'申时',period:'晡时',tip:'宜出门历练'},{name:'酉时',period:'日入',tip:'宜出门历练'},{name:'戌时',period:'黄昏',tip:'宜打坐修炼'},{name:'亥时',period:'人定',tip:'宜打坐修炼'}];
 function getRealShichenIndex(){const h=new Date().getHours();if(h>=23||h<1)return 0;return Math.floor((h+1)/2)}
 
-/* ========== 品阶 ========== */
+/* ============================================================
+   二、品阶
+   ============================================================ */
 const SKILL_QUALITY={common:{name:'凡品',color:'#8b7355',maxTier:5,mult:1},mid:{name:'中品',color:'#4a7a4a',maxTier:6,mult:1.8},high:{name:'上品',color:'#2c5a80',maxTier:8,mult:3},supreme:{name:'极品',color:'#a8342a',maxTier:10,mult:5}};
 
-/* ========== 灵根系统 ========== */
+/* ============================================================
+   三、灵根系统
+   ============================================================ */
 const SPIRIT_ROOTS={
-  chaos:{name:'混沌体',color:'#6b4a80',rate:2.5,mult:1.6,desc:'混沌未分，万法归一，超脱五行之外。'},
-  mutated:{name:'变异灵根',color:'#a8342a',rate:1.9,mult:1.45,desc:'变异灵根（风、雷、冰等），天资卓绝。'},
+  chaos:{name:'混沌体',color:'#6b4a80',rate:2.5,mult:1.6,desc:'混沌未分，万法归一。'},
+  mutated:{name:'变异灵根',color:'#a8342a',rate:1.9,mult:1.45,desc:'变异灵根，天资卓绝。'},
   heavenly:{name:'天灵根',color:'#a67c00',rate:1.6,mult:1.3,desc:'五行单灵根，天纵之资。'},
   dual:{name:'双灵根',color:'#2c5a80',rate:1.25,mult:1.15,desc:'双灵根，资质优良。'},
   triple:{name:'三灵根',color:'#4a7a4a',rate:1.0,mult:1.0,desc:'三灵根，中人之姿。'},
@@ -346,89 +380,121 @@ const SPIRIT_ROOTS={
 };
 const SPIRIT_SUBTYPE={heavenly:['金','木','水','火','土'],mutated:['风','雷','冰','暗','光']};
 
-/* ========== 特殊体质 ========== */
+/* ============================================================
+   四、特殊体质
+   ============================================================ */
 const PHYSIQUES={
   none:{name:'无',color:'#8b7355',desc:'体质平庸。'},
-  swordBone:{name:'天生剑骨',color:'#2c5a80',desc:'天生剑骨，剑修之资，剑法威力+30%。',bonus:'sword'},
-  daoBody:{name:'天生道体',color:'#4a7a4a',desc:'天生道体，修炼速度+30%，法术威力强。',bonus:'dao'},
-  charmBone:{name:'天生媚骨',color:'#a8342a',desc:'天生媚骨，魅力无双，NPC好感获得+50%。',bonus:'charm'},
-  furnaceBody:{name:'天生炉鼎',color:'#6b4a80',desc:'天生炉鼎，双修效果加倍，但易被觊觎。',bonus:'furnace'},
-  buddhaHeart:{name:'天生佛心',color:'#a67c00',desc:'天生佛心，佛门功法威力+40%，不易堕魔。',bonus:'buddha'},
-  demonBone:{name:'天生魔骨',color:'#8b3a3a',desc:'天生魔骨，魔道功法威力+40%，杀伐果决。',bonus:'demon'},
-  pillHeart:{name:'天生丹心',color:'#4a7a4a',desc:'天生丹心，炼丹成功率和产量大幅提升。',bonus:'pill'}
+  swordBone:{name:'天生剑骨',color:'#2c5a80',desc:'剑修之资，剑法威力+30%。',bonus:'sword'},
+  daoBody:{name:'天生道体',color:'#4a7a4a',desc:'修炼速度+30%。',bonus:'dao'},
+  charmBone:{name:'天生媚骨',color:'#a8342a',desc:'好感获得+50%。',bonus:'charm'},
+  furnaceBody:{name:'天生炉鼎',color:'#6b4a80',desc:'双修效果加倍。',bonus:'furnace'},
+  buddhaHeart:{name:'天生佛心',color:'#a67c00',desc:'佛门功法威力+40%。',bonus:'buddha'},
+  demonBone:{name:'天生魔骨',color:'#8b3a3a',desc:'魔道功法威力+40%。',bonus:'demon'},
+  pillHeart:{name:'天生丹心',color:'#4a7a4a',desc:'炼丹成功率+30%。',bonus:'pill'}
 };
 
-/* ========== 灵宠品级倍率 ========== */
-const PET_QUALITY_INFO={
-  common:{name:'凡品',color:'#8b7355',mult:1},
-  mid:{name:'中品',color:'#4a7a4a',mult:1.8},
-  high:{name:'上品',color:'#2c5a80',mult:3},
-  supreme:{name:'极品',color:'#a8342a',mult:5}
+/* ============================================================
+   五、主线剧情预留：固定 NPC 表
+   与随机 NPC 完全分离。开局即挂载到 player.storyRelations
+   ============================================================ */
+const STORY_NPCS={
+  fiance:{
+    id:'story_fiance',role:'未婚夫',name:'',dao:'',gender:'男',
+    sect:'',position:'',favor:0,met:false,hostile:true,
+    desc:'前世亲手杀死你的人。',
+  },
+  sister:{
+    id:'story_sister',role:'庶妹',name:'',dao:'',gender:'女',
+    sect:'',position:'',favor:0,met:false,hostile:true,
+    desc:'暗中勾结未婚夫，夺取家产的庶妹。',
+  },
+  brother:{
+    id:'story_brother',role:'哥哥',name:'',dao:'',gender:'男',
+    sect:'',position:'',favor:100,met:false,dead:true,
+    desc:'为救你而惨死的兄长。',
+  },
+  father:{
+    id:'story_father',role:'父亲',name:'',dao:'',gender:'男',
+    sect:'',position:'',favor:100,met:false,dead:true,
+    desc:'含冤而终的父亲。',
+  },
+  mother:{
+    id:'story_mother',role:'母亲',name:'',dao:'',gender:'女',
+    sect:'',position:'',favor:100,met:false,dead:true,
+    desc:'含冤而终的母亲。',
+  },
 };
 
-/* ========== 灵宠种族 ========== */
-const PET_SPECIES={
-  cat:{name:'灵猫',icon:'🐱',stat:'dodge',value:8,desc:'身法灵动，善闪避。',hatchTime:7,yaoBase:{hp:60,atk:8,def:4,agi:16,mp:30},favDish:'蒸鱼',favItem:'灵蜂蜜'},
-  dog:{name:'灵犬',icon:'🐶',stat:'agility',value:5,desc:'忠诚机敏，行动迅捷。',hatchTime:7,yaoBase:{hp:70,atk:10,def:6,agi:12,mp:20},favDish:'酱牛肉',favItem:'青锋剑穗'},
-  fox:{name:'灵狐',icon:'🦊',stat:'crit',value:8,critDmg:10,desc:'妖媚狡黠，暴击高。',hatchTime:30,yaoBase:{hp:55,atk:12,def:3,agi:15,mp:50},favDish:'百花酿',favItem:'霓裳羽衣'},
-  snake:{name:'灵蛇',icon:'🐍',stat:'cultivate',value:.2,desc:'静修之灵，助修炼。',hatchTime:30,yaoBase:{hp:50,atk:10,def:5,agi:10,mp:60},favDish:'灵茶',favItem:'寒玉笛'},
-  wolf:{name:'灵狼',icon:'🐺',stat:'atk',value:15,desc:'凶悍勇猛，加攻击。',hatchTime:30,yaoBase:{hp:80,atk:18,def:8,agi:12,mp:25},favDish:'烤灵兽肉',favItem:'和田玉牌'},
-  rabbit:{name:'灵兔',icon:'🐰',stat:'hp',value:60,desc:'温顺可爱，加气血。',hatchTime:7,yaoBase:{hp:100,atk:5,def:4,agi:14,mp:30},favDish:'桂花糕',favItem:'如意结'},
-  turtle:{name:'灵龟',icon:'🐢',stat:'def',value:12,desc:'坚如磐石，加防御。',hatchTime:90,yaoBase:{hp:120,atk:6,def:20,agi:5,mp:40},favDish:'银耳羹',favItem:'玲珑玉佩'},
-  phoenix:{name:'凤凰',icon:'🔥',stat:'crit',value:15,critDmg:20,desc:'浴火重生，暴击之王。',hatchTime:360,yaoBase:{hp:200,atk:35,def:15,agi:20,mp:150},favDish:'灵果拼盘',favItem:'霓裳羽衣'},
-  dragon:{name:'真龙',icon:'🐉',stat:'atk',value:40,desc:'龙威盖世，攻击无双。',hatchTime:360,yaoBase:{hp:300,atk:50,def:25,agi:15,mp:200},favDish:'佛跳墙',favItem:'和田玉牌'},
-  qilin:{name:'麒麟',icon:'🦄',stat:'hp',value:150,desc:'祥瑞之兽，气血磅礴。',hatchTime:180,yaoBase:{hp:280,atk:20,def:30,agi:10,mp:120},favDish:'灵芝炖鸡',favItem:'千年雪莲'}
-};
+/* ============================================================
+   六、剧情时间表（预留）
+   未来在 advanceTime 中检查 dateMatch，触发对应剧情
+   ============================================================ */
+const STORY_EVENTS=[
+  // 示例（暂未启用）：
+  // { year:1, month:1, day:1, trigger:'story_opening', once:true, priority:100 },
+  // { year:1, month:3, day:15, trigger:'meet_old_friend', once:true },
+  // { year:2, month:6, day:1, trigger:'sister_betrayal', once:true },
+];
 
-/* ========== 门派 ========== */
-const SECTS_TOP=[{name:'太虚宗',rank:'顶级',positions:['宗主','太上长老','首席长老','堂主','真传弟子']},{name:'紫霄仙宗',rank:'顶级',positions:['宗主','大长老','长老','执事','内门弟子']},{name:'天衍仙宗',rank:'顶级',positions:['宗主','天机长老','长老','护法','内门弟子']},{name:'万剑宗',rank:'顶级',isSword:true,positions:['剑主','剑阁长老','长老','护剑使','内门弟子']},{name:'五行仙门',rank:'顶级',positions:['门主','五行长老','长老','执事','内门弟子']},{name:'乾坤仙宗',rank:'顶级',positions:['宗主','乾坤长老','长老','护法','内门弟子']},{name:'太一门',rank:'顶级',positions:['掌教','太上长老','首座长老','内门长老','真传弟子']},{name:'天魔宗',rank:'顶级',positions:['魔主','天魔长老','护法','执事','内门弟子']},{name:'万妖谷',rank:'顶级',positions:['谷主','妖王','妖将','妖兵统领','妖兵']},{name:'药王谷',rank:'顶级',positions:['谷主','丹王','丹师','药童','外门弟子']}];
-const SECTS_MID=[{name:'天剑门',rank:'中等',isSword:true,positions:['门主','长老','执事','内门弟子','外门弟子']},{name:'玄冰宫',rank:'中等',positions:['宫主','冰晶长老','长老','护法','内门弟子']},{name:'丹霞宗',rank:'中等',positions:['宗主','丹霞长老','执事','丹师','外门弟子']},{name:'天机阁',rank:'中等',positions:['阁主','长老','客卿','执事','内门弟子']},{name:'焚天宗',rank:'中等',positions:['宗主','焚天长老','护法','执事','内门弟子']},{name:'暗影楼',rank:'中等',positions:['楼主','影长老','金牌杀手','银牌杀手','暗影成员']},{name:'百花谷',rank:'中等',positions:['谷主','花长老','长老','花卫','外门弟子']},{name:'御灵宗',rank:'中等',positions:['宗主','御灵长老','执事','灵兽师','外门弟子']},{name:'符箓宗',rank:'中等',positions:['宗主','符箓长老','执事','符师','外门弟子']},{name:'炼器门',rank:'中等',positions:['门主','器宗长老','执事','炼器师','外门弟子']},{name:'寒山寺',rank:'中等',buddhist:true,positions:['住持','首座','长老','知客僧','沙弥']},{name:'五毒教',rank:'中等',positions:['教主','毒长老','护法','执事','外门弟子']},{name:'驭风阁',rank:'中等',positions:['阁主','风长老','长老','执事','内门弟子']},{name:'雷音寺',rank:'中等',buddhist:true,positions:['方丈','首座','长老','护法金刚','沙弥']},{name:'幻月宗',rank:'中等',positions:['宗主','幻月长老','护法','执事','外门弟子']}];
-const SECTS_LOW=[{name:'青石帮',rank:'低等',positions:['帮主','副帮主','堂主','帮众']},{name:'落云谷',rank:'低等',positions:['谷主','管事','弟子']},{name:'白巧园',rank:'低等',positions:['园主','管事','园丁']},{name:'黄枫谷',rank:'低等',positions:['谷主','执事','散修']},{name:'青阳门',rank:'低等',positions:['门主','长老','弟子']},{name:'极音岛',rank:'低等',positions:['岛主','长老','弟子']},{name:'隐煞门',rank:'低等',positions:['门主','长老','弟子']},{name:'元龟岛',rank:'低等',positions:['岛主','长老','弟子']},{name:'天符门',rank:'低等',positions:['门主','符师','弟子']},{name:'燕家堡',rank:'低等',positions:['堡主','长老','族人']},{name:'铁砂帮',rank:'低等',positions:['帮主','副帮主','帮众']},{name:'红棍会',rank:'低等',positions:['会长','头目','帮众']},{name:'翠微山庄',rank:'低等',positions:['庄主','管事','庄丁']},{name:'碧波潭',rank:'低等',positions:['潭主','长老','弟子']},{name:'清风寨',rank:'低等',positions:['寨主','头领','寨众']},{name:'古剑门',rank:'低等',isSword:true,positions:['门主','长老','弟子']},{name:'掩月宗',rank:'低等',positions:['宗主','长老','弟子']},{name:'紫竹林',rank:'低等',positions:['林主','长老','弟子']},{name:'玄铁堡',rank:'低等',positions:['堡主','铁匠','堡丁']},{name:'灵泉派',rank:'低等',positions:['掌门','长老','弟子']}];
-
-const BUDDHIST_SECTS=['寒山寺','雷音寺'];
-function isBuddhist(sect){return BUDDHIST_SECTS.includes(sect)}
-function isSwordSect(sect){return [...SECTS_TOP,...SECTS_MID,...SECTS_LOW].find(s=>s.name===sect)?.isSword}
-
-/* ========== 灵草 ========== */
-const HERB_DB={青灵草:2,赤叶草:2,白芷草:3,紫苏叶:3,火绒草:4,水纹莲:4,金线草:5,木灵根:5,土茯苓:6,云雾草:6,玉髓草:8,碧血芝:10,银叶花:12,冰心草:15,紫电藤:18,龙涎叶:20,凤羽花:25,天星草:30,玄冰草:35,血菩提:40,九叶芝:50,紫血兰:60,麒麟叶:70,龙血草:80,凤血花:100,天灵果:120,地髓花:150,玄天叶:180,九幽藤:200,玉虚草:250,混沌莲:350,阴阳果:450,星辰花:550,紫霄藤:700,造化叶:900,鸿蒙花:1200,太极芝:1500,混元果:1800,无极莲:2200,天道花:3000};
-const HERB_LIST=Object.keys(HERB_DB);
-
-/* ========== 丹药名称库 ========== */
+/* ============================================================
+   七、名称词库
+   ============================================================ */
+const XINFA_PREFIX=['玄天','紫霄','太虚','混元','九转','天罡','地煞','阴阳','五行','八卦','星辰','月华','日耀','风雷','冰火','云海','苍穹','碧落','黄泉','幽冥','赤炎','青木','金锋','水灵','土厚'];
+const XINFA_SUFFIX=['心经','心法','真诀','秘诀','宝典','神功','圣经','道经','仙诀','玄功'];
+const JIANFA_PREFIX=['青锋','紫电','流云','飞星','落月','惊鸿','游龙','翔凤','破空','断岳','斩浪','焚天','寒冰','疾风','雷霆','流光','浮光','掠影','追魂','夺魄','诛仙','戮神','斩妖','屠魔'];
+const JIANFA_SUFFIX=['剑法','剑诀','剑术','剑经','剑典','剑谱','剑道','剑意','剑心','剑魂'];
 const PILL_CHARS_A=['清','凝','聚','养','补','破','化','归','固','通','明','静','悟','淬','洗','易','辟','驻','续','延','龙','太','紫','九','三','五','七','八','千','万','玄','灵','参','碧','昆','云','月','日','星','辰','素','赤','黄','白','青','黑'];
 const PILL_CHARS_B=['心','神','气','元','天','障','龙','源','本','灵','心','道','体','髓','筋','谷','颜','命','寿','虎','极','金','转','花','气','星','卦','机','象','犀','同','游','仑','雾','华','辉','辰','宿','光','辉','阳','阴','虚','真','性'];
 const PILL_SUFFIX=['丹','丸','散','膏'];
+
+/* ============================================================
+   八、灵草
+   ============================================================ */
+const HERB_DB={青灵草:2,赤叶草:2,白芷草:3,紫苏叶:3,火绒草:4,水纹莲:4,金线草:5,木灵根:5,土茯苓:6,云雾草:6,玉髓草:8,碧血芝:10,银叶花:12,冰心草:15,紫电藤:18,龙涎叶:20,凤羽花:25,天星草:30,玄冰草:35,血菩提:40,九叶芝:50,紫血兰:60,麒麟叶:70,龙血草:80,凤血花:100,天灵果:120,地髓花:150,玄天叶:180,九幽藤:200,玉虚草:250,混沌莲:350,阴阳果:450,星辰花:550,紫霄藤:700,造化叶:900,鸿蒙花:1200,太极芝:1500,混元果:1800,无极莲:2200,天道花:3000};
+const HERB_LIST=Object.keys(HERB_DB);
+
+/* ============================================================
+   九、丹药品级
+   ============================================================ */
 const PILL_QUALITY={common:{name:'下品',color:'#6b4a2b',count:20,tox:1},mid:{name:'中品',color:'#4a7a4a',count:16,tox:2},high:{name:'上品',color:'#2c5a80',count:8,tox:5},supreme:{name:'顶级',color:'#a8342a',count:4,tox:10}};
-function genPillName(used){let tries=0;while(tries<300){const n=PILL_CHARS_A[Math.floor(Math.random()*PILL_CHARS_A.length)]+PILL_CHARS_B[Math.floor(Math.random()*PILL_CHARS_B.length)]+PILL_SUFFIX[Math.floor(Math.random()*PILL_SUFFIX.length)];if(!used.has(n)){used.add(n);return n}tries++}const fb=PILL_CHARS_A[0]+PILL_CHARS_B[0]+PILL_SUFFIX[0]+used.size;used.add(fb);return fb}
-function genPill(quality,idx,used){
-  const name=genPillName(used);const tox=PILL_QUALITY[quality].tox;
-  let effect={},sellPrice=0,desc='';
-  if(quality==='common'){const sub=Math.floor(Math.random()*3);if(sub===0){const v=50+Math.floor(Math.random()*150);effect={heal:v};desc=`服之气血 +${v}。`;sellPrice=Math.floor(v*.5)}else if(sub===1){const v=30+Math.floor(Math.random()*120);effect={mana:v};desc=`服之灵力 +${v}。`;sellPrice=Math.floor(v*.5)}else{const v=50+Math.floor(Math.random()*450);effect={exp:v};desc=`服之修为 +${v}。`;sellPrice=Math.floor(v*.5)}}
-  else if(quality==='mid'){const sub=Math.floor(Math.random()*4);if(sub===0){const v=200+Math.floor(Math.random()*600);effect={heal:v};desc=`服之气血 +${v}。`;sellPrice=Math.floor(v*.5)}else if(sub===1){const v=150+Math.floor(Math.random()*350);effect={mana:v};desc=`服之灵力 +${v}。`;sellPrice=Math.floor(v*.5)}else if(sub===2){const v=500+Math.floor(Math.random()*2500);effect={exp:v};desc=`服之修为 +${v}。`;sellPrice=Math.floor(v*.15)}else{const v=3+Math.floor(Math.random()*6);effect={bonus:v};desc=`突破成功率 +${v}%。`;sellPrice=150+v*50}}
-  else if(quality==='high'){const sub=Math.floor(Math.random()*6);if(sub===0){const v=30+Math.floor(Math.random()*70);effect={maxHp:v};desc=`永久提升气血上限 +${v}。`;sellPrice=200+v*8}else if(sub===1){const v=20+Math.floor(Math.random()*40);effect={maxMp:v};desc=`永久提升灵力上限 +${v}。`;sellPrice=200+v*8}else if(sub===2){const v=3+Math.floor(Math.random()*5);effect={atk:v};desc=`永久提升攻击 +${v}。`;sellPrice=300+v*150}else if(sub===3){const v=2+Math.floor(Math.random()*4);effect={def:v};desc=`永久提升防御 +${v}。`;sellPrice=250+v*150}else if(sub===4){const v=5+Math.floor(Math.random()*10);effect={exp:v*1000};desc=`服之修为 +${v*1000}。`;sellPrice=300+v*80}else{const v=1+Math.floor(Math.random()*3);effect={dodge:v};desc=`永久提升闪避 +${v}%。`;sellPrice=500+v*200}}
-  else{const sub=idx;if(sub===0){effect={maxHp:200,def:8};desc='永久提升气血上限 +200 · 防御 +8。';sellPrice=4000}else if(sub===1){effect={maxMp:120,atk:8};desc='永久提升灵力上限 +120 · 攻击 +8。';sellPrice=4000}else if(sub===2){effect={atk:12,dodge:3};desc='永久提升攻击 +12 · 闪避 +3%。';sellPrice=5500}else{effect={maxHp:300,maxMp:200,atk:15,def:10};desc='永久提升气血上限 +300 · 灵力上限 +200 · 攻击 +15 · 防御 +10。';sellPrice=12000}}
-  const targetCost=Math.floor(sellPrice*.35);const ingredients={};let remaining=targetCost;const herbCount=2+Math.floor(Math.random()*3);
-  for(let i=0;i<herbCount&&remaining>0;i++){const candidates=HERB_LIST.filter(h=>HERB_DB[h]<=remaining&&!ingredients[h]);if(candidates.length===0)break;const herb=candidates[Math.floor(Math.random()*candidates.length)];const maxCount=Math.max(1,Math.floor(remaining/HERB_DB[herb]));const cnt=Math.max(1,Math.min(maxCount,Math.floor(Math.random()*maxCount)+1));ingredients[herb]=cnt;remaining-=cnt*HERB_DB[herb]}
-  const realCost=Object.entries(ingredients).reduce((s,[h,c])=>s+HERB_DB[h]*c,0);
-  return{id:'pill_'+quality+'_'+idx+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),name,quality,desc,effect,ingredients,realCost,sellPrice,buyPrice:Math.floor(sellPrice*2),tox};
-}
-function genAllPills(){const used=new Set();const pool={common:[],mid:[],high:[],supreme:[]};['common','mid','high','supreme'].forEach(q=>{for(let i=0;i<PILL_QUALITY[q].count;i++)pool[q].push(genPill(q,i,used))});return pool}
 
-/* ========== 物品 ========== */
+/* ============================================================
+   十、物品
+   ============================================================ */
 const ITEM_DB={普通铁剑:{type:'weapon',name:'普通铁剑',desc:'凡铁所铸。',atk:5,price:60},精铁长剑:{type:'weapon',name:'精铁长剑',desc:'精铁锻打。',atk:12,price:200},青云剑:{type:'weapon',name:'青云剑',desc:'剑身泛青。',atk:22,crit:2,price:500},玄铁重剑:{type:'weapon',name:'玄铁重剑',desc:'玄铁所铸。',atk:38,def:5,price:1200},禅杖:{type:'weapon',name:'禅杖',desc:'佛门法器。',atk:15,price:180,buddhist:true,canEquip:false},念珠:{type:'weapon',name:'念珠',desc:'一百零八颗。',atk:10,def:3,price:150,buddhist:true,canEquip:false},降魔杵:{type:'weapon',name:'降魔杵',desc:'降魔之物。',atk:28,def:5,price:600,buddhist:true,canEquip:false},金钵:{type:'weapon',name:'金钵',desc:'化缘金钵。',atk:22,crit:3,price:450,buddhist:true,canEquip:false},菩提念珠:{type:'weapon',name:'菩提念珠',desc:'菩提所结。',atk:35,def:8,crit:5,price:1500,buddhist:true,canEquip:false},狼牙护符:{type:'acc',name:'狼牙护符',desc:'野狼獠牙。',atk:3,hp:10,price:100},灵猴玉佩:{type:'acc',name:'灵猴玉佩',desc:'沾染灵气。',mp:10,dodge:3,price:130},护心铜镜:{type:'acc',name:'护心铜镜',desc:'可挡刀剑。',def:6,hp:25,price:250},疾风铃:{type:'acc',name:'疾风铃',desc:'铃响身动。',dodge:5,agility:2,price:220},幽魂精魄:{type:'acc',name:'幽魂精魄',desc:'阴冷刺骨。',atk:6,crit:3,price:380},破障丹:{type:'breakthrough',name:'破障丹',desc:'突破+5%。',bonus:5,price:180},凝神丹:{type:'breakthrough',name:'凝神丹',desc:'突破+10%。',bonus:10,price:450},天机丹:{type:'breakthrough',name:'天机丹',desc:'突破+20%。',bonus:20,price:1000},易名符:{type:'rename',name:'易名符',desc:'更改姓名与道号。',price:5000},化形丹:{type:'evolution',name:'化形丹',desc:'辅助灵兽化形。',price:3000},改髓丹:{type:'rewrite',name:'改髓丹',desc:'改造灵根，提升一个品级。',price:20000},净毒药水:{type:'antitox',name:'净毒药水',desc:'饮下可解 -10 丹毒。',toxReduce:10,price:3000},千年灵根果:{type:'rootItem',name:'千年灵根果',desc:'使用后可随机获得一种灵根。',price:15000},混沌种子:{type:'rootItem',name:'混沌种子',desc:'使用后可将灵根提升为混沌体。',price:80000}};
-
 const INGREDIENT_DB={大米:1,青菜:2,猪肉:3,鸡肉:3,鱼:3,牛肉:4,鸭肉:5,虾仁:5,蟹肉:6,豆腐:2,灵果:8,灵兽肉:12,灵芝:15,人参:12,红枣:2,莲子:2,银耳:2,枸杞:2,菊花:1,茶叶:2,灵茶:6,桂花:3,蜂蜜:4,雪莲:20,灵泉水:4};
 const RECIPE_DB=[{name:'白米饭',ingredients:{大米:1},dishPrice:5,effect:'hp',value:10,desc:'最朴素的饱腹之物。',meat:false},{name:'青菜汤',ingredients:{青菜:1,灵泉水:1},dishPrice:15,effect:'hp',value:15,desc:'清淡爽口。',meat:false},{name:'炒时蔬',ingredients:{青菜:2},dishPrice:10,effect:'hp',value:20,desc:'山野时蔬。',meat:false},{name:'蒸鱼',ingredients:{鱼:1,灵泉水:1},dishPrice:18,effect:'hp',value:35,desc:'清蒸河鲜。',meat:true},{name:'红烧肉',ingredients:{猪肉:2,蜂蜜:1},dishPrice:20,effect:'hp',value:45,desc:'肥而不腻。',meat:true},{name:'白切鸡',ingredients:{鸡肉:2},dishPrice:15,effect:'hp',value:40,desc:'皮滑肉嫩。',meat:true},{name:'酱牛肉',ingredients:{牛肉:2,蜂蜜:1},dishPrice:25,effect:'hp',value:50,desc:'卤香入味。',meat:true},{name:'狮子头',ingredients:{猪肉:2,豆腐:1},dishPrice:18,effect:'hp',value:60,desc:'肉丸松软。',meat:true},{name:'八宝鸭',ingredients:{鸭肉:2,红枣:2,莲子:2},dishPrice:30,effect:'hp',value:90,desc:'八珍香浓。',meat:true},{name:'佛跳墙',ingredients:{鸭肉:1,鸡肉:1,猪肉:1,虾仁:2,灵芝:1},dishPrice:80,effect:'hp',value:200,desc:'山珍海味荟萃。',meat:true},{name:'葱油饼',ingredients:{大米:2,蜂蜜:1},dishPrice:12,effect:'hp',value:25,desc:'外酥内软。',meat:false},{name:'阳春面',ingredients:{大米:2},dishPrice:10,effect:'hp',value:20,desc:'清汤暖胃。',meat:false},{name:'小笼包',ingredients:{大米:1,猪肉:1},dishPrice:15,effect:'hp',value:30,desc:'皮薄汁多。',meat:true},{name:'桂花糕',ingredients:{大米:2,桂花:1},dishPrice:18,effect:'hp',value:22,desc:'清甜软糯。',meat:false},{name:'绿豆糕',ingredients:{大米:1,蜂蜜:1},dishPrice:12,effect:'hp',value:18,desc:'入口即化。',meat:false},{name:'云片糕',ingredients:{大米:2,蜂蜜:1},dishPrice:16,effect:'hp',value:20,desc:'层层叠叠。',meat:false},{name:'银耳羹',ingredients:{银耳:1,蜂蜜:1},dishPrice:15,effect:'mp',value:20,desc:'清润养颜。',meat:false},{name:'莲子羹',ingredients:{莲子:2,枸杞:1},dishPrice:15,effect:'mp',value:25,desc:'清心去火。',meat:false},{name:'红枣汤',ingredients:{红枣:2,枸杞:1},dishPrice:12,effect:'hp',value:25,desc:'滋补气血。',meat:false},{name:'人参鸡汤',ingredients:{鸡肉:2,人参:1},dishPrice:40,effect:'hp',value:120,desc:'大补元气。',meat:true},{name:'枸杞茶',ingredients:{枸杞:2},dishPrice:10,effect:'mp',value:15,desc:'养肝明目。',meat:false},{name:'菊花茶',ingredients:{菊花:2},dishPrice:8,effect:'mp',value:12,desc:'清热降火。',meat:false},{name:'灵茶',ingredients:{茶叶:2,灵泉水:1},dishPrice:20,effect:'mp',value:60,desc:'以灵泉水冲泡。',meat:false},{name:'百花酿',ingredients:{桂花:2,蜂蜜:2,灵泉水:1},dishPrice:30,effect:'mp',value:100,desc:'百花酿制。',meat:false},{name:'灵果拼盘',ingredients:{灵果:2},dishPrice:25,effect:'hp',value:80,desc:'鲜美异常。',meat:false},{name:'烤灵兽肉',ingredients:{灵兽肉:2},dishPrice:35,effect:'hp',value:160,desc:'大补之物。',meat:true},{name:'龙井虾仁',ingredients:{虾仁:2,茶叶:1},dishPrice:20,effect:'hp',value:95,desc:'茶香四溢。',meat:true},{name:'蟹粉豆腐',ingredients:{蟹肉:2,豆腐:1},dishPrice:20,effect:'hp',value:85,desc:'蟹黄鲜香。',meat:true},{name:'灵芝炖鸡',ingredients:{鸡肉:2,灵芝:1},dishPrice:45,effect:'hp',value:130,desc:'气血双补。',meat:true},{name:'雪莲羹',ingredients:{雪莲:1,银耳:1,灵泉水:1},dishPrice:60,effect:'mp',value:200,desc:'珍稀灵膳。',meat:false}];
-function dishToItem(r){return{id:genId(),type:'dish',name:r.name,desc:r.desc,heal:r.effect==='hp'?r.value:0,mana:r.effect==='mp'?r.value:0,sellPrice:Math.floor(r.dishPrice*.5)}}
 const GIFT_DB=[{name:'桂花酿',price:60},{name:'碧螺春茶',price:80},{name:'紫檀木梳',price:100},{name:'白玉折扇',price:150},{name:'香囊',price:50},{name:'玲珑玉佩',price:220},{name:'青瓷花瓶',price:180},{name:'漆木梳妆盒',price:200},{name:'银丝缠花',price:130},{name:'松烟墨锭',price:160},{name:'宣纸一沓',price:70},{name:'和田玉牌',price:500},{name:'醉仙酿',price:800},{name:'灵蜂蜜',price:120},{name:'千年雪莲',price:400},{name:'寒玉笛',price:350},{name:'如意结',price:90},{name:'青锋剑穗',price:140},{name:'霓裳羽衣',price:600},{name:'《山河图》',price:450}];
 const VEGETARIAN_DISHES=RECIPE_DB.filter(r=>!r.meat).map(r=>r.name);
 const BUDDHIST_GIFTS=['碧螺春茶','白玉折扇','香囊','松烟墨锭','宣纸一沓','如意结','寒玉笛','青瓷花瓶','和田玉牌'];
 const BUDDHIST_NAME_PREFIX=['了','慧','普','玄','悟','净','弘','妙','德','圆','智','法','真','寂','禅','明','菩','觉','如','空','无','本','道','通'];
 const BUDDHIST_NAME_SUFFIX=['尘','空','渡','机','能','法','音','明','通','深','海','心','镜','远','真','如','来','相','为','常','寂','灭','济','缘'];
 
-/* ========== 秘境 ========== */
+/* ============================================================
+   十一、灵宠
+   ============================================================ */
+const PET_SPECIES={cat:{name:'灵猫',icon:'🐱',stat:'dodge',value:8,desc:'身法灵动，善闪避。',hatchTime:7,yaoBase:{hp:60,atk:8,def:4,agi:16,mp:30},favDish:'蒸鱼',favItem:'灵蜂蜜'},dog:{name:'灵犬',icon:'🐶',stat:'agility',value:5,desc:'忠诚机敏，行动迅捷。',hatchTime:7,yaoBase:{hp:70,atk:10,def:6,agi:12,mp:20},favDish:'酱牛肉',favItem:'青锋剑穗'},fox:{name:'灵狐',icon:'🦊',stat:'crit',value:8,critDmg:10,desc:'妖媚狡黠，暴击高。',hatchTime:30,yaoBase:{hp:55,atk:12,def:3,agi:15,mp:50},favDish:'百花酿',favItem:'霓裳羽衣'},snake:{name:'灵蛇',icon:'🐍',stat:'cultivate',value:.2,desc:'静修之灵，助修炼。',hatchTime:30,yaoBase:{hp:50,atk:10,def:5,agi:10,mp:60},favDish:'灵茶',favItem:'寒玉笛'},wolf:{name:'灵狼',icon:'🐺',stat:'atk',value:15,desc:'凶悍勇猛，加攻击。',hatchTime:30,yaoBase:{hp:80,atk:18,def:8,agi:12,mp:25},favDish:'烤灵兽肉',favItem:'和田玉牌'},rabbit:{name:'灵兔',icon:'🐰',stat:'hp',value:60,desc:'温顺可爱，加气血。',hatchTime:7,yaoBase:{hp:100,atk:5,def:4,agi:14,mp:30},favDish:'桂花糕',favItem:'如意结'},turtle:{name:'灵龟',icon:'🐢',stat:'def',value:12,desc:'坚如磐石，加防御。',hatchTime:90,yaoBase:{hp:120,atk:6,def:20,agi:5,mp:40},favDish:'银耳羹',favItem:'玲珑玉佩'},phoenix:{name:'凤凰',icon:'🔥',stat:'crit',value:15,critDmg:20,desc:'浴火重生，暴击之王。',hatchTime:360,yaoBase:{hp:200,atk:35,def:15,agi:20,mp:150},favDish:'灵果拼盘',favItem:'霓裳羽衣'},dragon:{name:'真龙',icon:'🐉',stat:'atk',value:40,desc:'龙威盖世，攻击无双。',hatchTime:360,yaoBase:{hp:300,atk:50,def:25,agi:15,mp:200},favDish:'佛跳墙',favItem:'和田玉牌'},qilin:{name:'麒麟',icon:'🦄',stat:'hp',value:150,desc:'祥瑞之兽，气血磅礴。',hatchTime:180,yaoBase:{hp:280,atk:20,def:30,agi:10,mp:120},favDish:'灵芝炖鸡',favItem:'千年雪莲'}};
+const PET_QUALITY_INFO={common:{name:'凡品',color:'#8b7355',mult:1},mid:{name:'中品',color:'#4a7a4a',mult:1.8},high:{name:'上品',color:'#2c5a80',mult:3},supreme:{name:'极品',color:'#a8342a',mult:5}};
+
+/* ============================================================
+   十二、门派
+   ============================================================ */
+const SECTS_TOP=[{name:'太虚宗',rank:'顶级',positions:['宗主','太上长老','首席长老','堂主','真传弟子']},{name:'紫霄仙宗',rank:'顶级',positions:['宗主','大长老','长老','执事','内门弟子']},{name:'天衍仙宗',rank:'顶级',positions:['宗主','天机长老','长老','护法','内门弟子']},{name:'万剑宗',rank:'顶级',isSword:true,positions:['剑主','剑阁长老','长老','护剑使','内门弟子']},{name:'五行仙门',rank:'顶级',positions:['门主','五行长老','长老','执事','内门弟子']},{name:'乾坤仙宗',rank:'顶级',positions:['宗主','乾坤长老','长老','护法','内门弟子']},{name:'太一门',rank:'顶级',positions:['掌教','太上长老','首座长老','内门长老','真传弟子']},{name:'天魔宗',rank:'顶级',positions:['魔主','天魔长老','护法','执事','内门弟子']},{name:'万妖谷',rank:'顶级',positions:['谷主','妖王','妖将','妖兵统领','妖兵']},{name:'药王谷',rank:'顶级',positions:['谷主','丹王','丹师','药童','外门弟子']}];
+const SECTS_MID=[{name:'天剑门',rank:'中等',isSword:true,positions:['门主','长老','执事','内门弟子','外门弟子']},{name:'玄冰宫',rank:'中等',positions:['宫主','冰晶长老','长老','护法','内门弟子']},{name:'丹霞宗',rank:'中等',positions:['宗主','丹霞长老','执事','丹师','外门弟子']},{name:'天机阁',rank:'中等',positions:['阁主','长老','客卿','执事','内门弟子']},{name:'焚天宗',rank:'中等',positions:['宗主','焚天长老','护法','执事','内门弟子']},{name:'暗影楼',rank:'中等',positions:['楼主','影长老','金牌杀手','银牌杀手','暗影成员']},{name:'百花谷',rank:'中等',positions:['谷主','花长老','长老','花卫','外门弟子']},{name:'御灵宗',rank:'中等',positions:['宗主','御灵长老','执事','灵兽师','外门弟子']},{name:'符箓宗',rank:'中等',positions:['宗主','符箓长老','执事','符师','外门弟子']},{name:'炼器门',rank:'中等',positions:['门主','器宗长老','执事','炼器师','外门弟子']},{name:'寒山寺',rank:'中等',buddhist:true,positions:['住持','首座','长老','知客僧','沙弥']},{name:'五毒教',rank:'中等',positions:['教主','毒长老','护法','执事','外门弟子']},{name:'驭风阁',rank:'中等',positions:['阁主','风长老','长老','执事','内门弟子']},{name:'雷音寺',rank:'中等',buddhist:true,positions:['方丈','首座','长老','护法金刚','沙弥']},{name:'幻月宗',rank:'中等',positions:['宗主','幻月长老','护法','执事','外门弟子']}];
+const SECTS_LOW=[{name:'青石帮',rank:'低等',positions:['帮主','副帮主','堂主','帮众']},{name:'落云谷',rank:'低等',positions:['谷主','管事','弟子']},{name:'白巧园',rank:'低等',positions:['园主','管事','园丁']},{name:'黄枫谷',rank:'低等',positions:['谷主','执事','散修']},{name:'青阳门',rank:'低等',positions:['门主','长老','弟子']},{name:'极音岛',rank:'低等',positions:['岛主','长老','弟子']},{name:'隐煞门',rank:'低等',positions:['门主','长老','弟子']},{name:'元龟岛',rank:'低等',positions:['岛主','长老','弟子']},{name:'天符门',rank:'低等',positions:['门主','符师','弟子']},{name:'燕家堡',rank:'低等',positions:['堡主','长老','族人']},{name:'铁砂帮',rank:'低等',positions:['帮主','副帮主','帮众']},{name:'红棍会',rank:'低等',positions:['会长','头目','帮众']},{name:'翠微山庄',rank:'低等',positions:['庄主','管事','庄丁']},{name:'碧波潭',rank:'低等',positions:['潭主','长老','弟子']},{name:'清风寨',rank:'低等',positions:['寨主','头领','寨众']},{name:'古剑门',rank:'低等',isSword:true,positions:['门主','长老','弟子']},{name:'掩月宗',rank:'低等',positions:['宗主','长老','弟子']},{name:'紫竹林',rank:'低等',positions:['林主','长老','弟子']},{name:'玄铁堡',rank:'低等',positions:['堡主','铁匠','堡丁']},{name:'灵泉派',rank:'低等',positions:['掌门','长老','弟子']}];
+const BUDDHIST_SECTS=['寒山寺','雷音寺'];
+function isBuddhist(sect){return BUDDHIST_SECTS.includes(sect)}
+function isSwordSect(sect){return[...SECTS_TOP,...SECTS_MID,...SECTS_LOW].find(s=>s.name===sect)?.isSword}
+
+/* ============================================================
+   十三、秘境
+   ============================================================ */
 const REALMS_LIST={low:[{id:'low1',name:'迷雾森林·外围',unlocked:true,dropRate:.10,desc:'低阶秘境，妖兽低弱。',monsters:[{name:'灰毛野兔',hp:30,atk:5,def:1,agility:12,dodge:15,exp:15,gold:5,drop:{name:'普通铁剑',rate:.10}},{name:'青皮野狼',hp:50,atk:8,def:2,agility:10,dodge:8,exp:25,gold:8,drop:{name:'狼牙护符',rate:.10}},{name:'山间灵猴',hp:40,atk:6,def:3,agility:15,dodge:18,exp:20,gold:6,drop:{name:'灵猴玉佩',rate:.09}}]},{id:'low2',name:'落月谷',unlocked:true,dropRate:.13,desc:'月华凝聚之地。',monsters:[{name:'月影狼',hp:60,atk:10,def:3,agility:12,dodge:12,exp:28,gold:10,drop:{name:'狼牙护符',rate:.13}},{name:'月华狐',hp:45,atk:9,def:2,agility:17,dodge:20,exp:26,gold:11,drop:{name:'灵猴玉佩',rate:.12}},{name:'谷中幽魂',hp:70,atk:13,def:4,agility:9,dodge:8,exp:38,gold:16,drop:{name:'幽魂精魄',rate:.10}}]},{id:'low3',name:'幽泉溪',unlocked:false,dropRate:.14,desc:'（未解锁）',monsters:[]}],mid:[{id:'mid1',name:'苍梧山',unlocked:false,dropRate:.15,desc:'（未解锁）',monsters:[]},{id:'mid2',name:'赤炎洞窟',unlocked:false,dropRate:.16,desc:'（未解锁）',monsters:[]},{id:'mid3',name:'寒潭深处',unlocked:false,dropRate:.17,desc:'（未解锁）',monsters:[]},{id:'mid4',name:'万兽林',unlocked:false,dropRate:.18,desc:'（未解锁）',monsters:[]},{id:'mid5',name:'白骨荒原',unlocked:false,dropRate:.19,desc:'（未解锁）',monsters:[]}],high:[{id:'high1',name:'九曲云海',unlocked:false,dropRate:.20,desc:'（未解锁）',monsters:[]},{id:'high2',name:'紫雷峡谷',unlocked:false,dropRate:.21,desc:'（未解锁）',monsters:[]},{id:'high3',name:'天罡剑冢',unlocked:false,dropRate:.22,desc:'（未解锁）',monsters:[]},{id:'high4',name:'万毒沼',unlocked:false,dropRate:.23,desc:'（未解锁）',monsters:[]},{id:'high5',name:'断魂崖',unlocked:false,dropRate:.24,desc:'（未解锁）',monsters:[]},{id:'high6',name:'星陨谷',unlocked:false,dropRate:.25,desc:'（未解锁）',monsters:[]},{id:'high7',name:'焚天火域',unlocked:false,dropRate:.26,desc:'（未解锁）',monsters:[]},{id:'high8',name:'玄冰极渊',unlocked:false,dropRate:.27,desc:'（未解锁）',monsters:[]}],top:[{id:'top1',name:'太虚仙境',unlocked:false,dropRate:.30,desc:'（未解锁）',monsters:[]},{id:'top2',name:'轮回古殿',unlocked:false,dropRate:.32,desc:'（未解锁）',monsters:[]},{id:'top3',name:'九幽炼狱',unlocked:false,dropRate:.34,desc:'（未解锁）',monsters:[]},{id:'top4',name:'混沌天渊',unlocked:false,dropRate:.36,desc:'（未解锁）',monsters:[]}]};
 
-/* ========== 战斗文案 ========== */
+/* ============================================================
+   十四、战斗文案
+   ============================================================ */
 const PLAYER_ATTACK_DESC=['你纵身跃起，一剑劈落——','你后仰下腰，剑锋前刺——','你侧身滑步，横剑斩出——','你气沉丹田，一拳轰出——','你翻身腾挪，剑走偏锋——','你虚晃一招，反手劈砍——','你足尖一点，剑如流星——','你身随剑转，一剑横扫——','你腾空而起，势若雷霆——','你贴地翻滚，撩剑上挑——'];
 const PLAYER_CRIT_DESC=['灵力暴涨，剑光大盛！','抓住破绽，一击破空！','气势如虹，雷霆万钧！','剑意凝于一点，轰然爆发！','浑身真气鼓荡，一击必杀！'];
 const ENEMY_ATTACK_DESC=['{n}张开血盆大口扑来——','{n}挥爪横扫而至——','{n}猛地冲撞而来——','{n}嘶吼着扑向你——','{n}身形一闪，骤然袭来——','{n}张口喷出一道气劲——','{n}蓄势已久，全力一击——'];
@@ -438,7 +504,9 @@ const SKILL_CAST_DESC=['你凝气于剑，剑法破空而出——','你剑指�
 const PET_ATTACK_DESC=['{p}张开利爪扑向{n}——','{p}腾空而起，一口咬向{n}——','{p}闪电般冲向{n}——','{p}发出嘶吼，扑向{n}——'];
 function pickRandom(a){return a[Math.floor(Math.random()*a.length)]}
 
-/* ========== 玩家 ========== */
+/* ============================================================
+   十五、玩家数据
+   ============================================================ */
 function defaultPlayer(){
   const skillStock=initShopSkillStock();
   const pillDB=genAllPills();
@@ -451,7 +519,13 @@ function defaultPlayer(){
     cultivateBonus:0,cooking:0,alchemy:0,gold:50,
     weapon:null,acc1:null,acc2:null,pet:null,
     bag:[],skills:[],relations:[],petEggs:[],
+    /* 主线剧情数据 */
+    storyRelations:JSON.parse(JSON.stringify(Object.values(STORY_NPCS))),
+    storyFlags:{},/* 剧情标记位 */
+    storyTriggered:{},/* 已触发的事件id */
+    /* 时间 */
     year:1,month:1,day:1,shichenIndex:getRealShichenIndex(),
+    /* 灵根体质 */
     spiritRoot:root,physique:physique,
     appearance:Math.floor(Math.random()*40)+60,
     talent:Math.floor(Math.random()*40)+60,
@@ -466,74 +540,12 @@ function defaultPlayer(){
 }
 let player=null;let saveSlots=[];
 const AUTO_SLOT=0,MANUAL_SLOTS=6;
-const STORAGE_KEY='xiuxian_saves_v16',AUTO_KEY='xiuxian_auto_v16';
-const STORY_KEY='xiuxian_story_seen_v16',NAME_KEY='xiuxian_name_v16';
+const STORAGE_KEY='xiuxian_saves_v17',AUTO_KEY='xiuxian_auto_v17';
+const STORY_KEY='xiuxian_story_seen_v17',NAME_KEY='xiuxian_name_v17';
 
-/* ========== 灵根/体质生成 ========== */
-function rollSpiritRoot(realmIdx){
-  // 高阶修士多为天灵根/变异
-  const high=realmIdx>=20;const mid=realmIdx>=10;
-  const roll=Math.random()*100;
-  if(high){
-    if(roll<1)return{sub:'chaos',type:'chaos'};
-    if(roll<15)return{sub:'mutated',type:'mutated',subType:pickRandom(SPIRIT_SUBTYPE.mutated)};
-    if(roll<50)return{sub:'heavenly',type:'heavenly',subType:pickRandom(SPIRIT_SUBTYPE.heavenly)};
-    if(roll<75)return{sub:'dual',type:'dual'};
-    if(roll<90)return{sub:'triple',type:'triple'};
-    if(roll<97)return{sub:'quad',type:'quad'};
-    return{sub:'penta',type:'penta'};
-  }else if(mid){
-    if(roll<.3)return{sub:'chaos',type:'chaos'};
-    if(roll<6)return{sub:'mutated',type:'mutated',subType:pickRandom(SPIRIT_SUBTYPE.mutated)};
-    if(roll<25)return{sub:'heavenly',type:'heavenly',subType:pickRandom(SPIRIT_SUBTYPE.heavenly)};
-    if(roll<50)return{sub:'dual',type:'dual'};
-    if(roll<75)return{sub:'triple',type:'triple'};
-    if(roll<90)return{sub:'quad',type:'quad'};
-    return{sub:'penta',type:'penta'};
-  }else{
-    if(roll<.05)return{sub:'chaos',type:'chaos'};
-    if(roll<2)return{sub:'mutated',type:'mutated',subType:pickRandom(SPIRIT_SUBTYPE.mutated)};
-    if(roll<8)return{sub:'heavenly',type:'heavenly',subType:pickRandom(SPIRIT_SUBTYPE.heavenly)};
-    if(roll<20)return{sub:'dual',type:'dual'};
-    if(roll<45)return{sub:'triple',type:'triple'};
-    if(roll<75)return{sub:'quad',type:'quad'};
-    return{sub:'penta',type:'penta'};
-  }
-}
-function rollPhysique(realmIdx){
-  const isHigh=realmIdx>=20;const isMid=realmIdx>=10;
-  const roll=Math.random()*100;
-  const specials=['swordBone','daoBody','charmBone','furnaceBody','buddhaHeart','demonBone','pillHeart'];
-  if(isHigh){
-    if(roll<20)return pickRandom(specials);
-    return 'none';
-  }else if(isMid){
-    if(roll<8)return pickRandom(specials);
-    return 'none';
-  }else{
-    if(roll<2)return pickRandom(specials);
-    return 'none';
-  }
-}
-function getRootMult(){
-  const r=SPIRIT_ROOTS[player.spiritRoot.type]||SPIRIT_ROOTS.penta;
-  return {rate:r.rate,mult:r.mult};
-}
-function getRootDisplay(){
-  const r=SPIRIT_ROOTS[player.spiritRoot.type]||SPIRIT_ROOTS.penta;
-  let name=r.name;
-  if(player.spiritRoot.subType)name=`${player.spiritRoot.subType}系${r.name}`;
-  return{name,color:r.color,desc:r.desc};
-}
-function getPhysiqueDisplay(){
-  const p=PHYSIQUES[player.physique]||PHYSIQUES.none;
-  return p;
-}
-function applyRootBonus(){
-  // 灵根加成到基础数值（通过属性乘数在refreshUI后展示，这里只在数值修改时调用）
-}
-
-/* ========== 工具 ========== */
+/* ============================================================
+   十六、通用工具
+   ============================================================ */
 function getRealm(){return REALMS[Math.min(player.realmIndex,REALMS.length-1)]}
 function getRealmName(idx){const r=REALMS[Math.min(idx!==undefined?idx:player.realmIndex,REALMS.length-1)];return r.sub?`${r.name}·${r.sub}`:r.name}
 function getExpNeeded(){return getRealm().baseExp}
@@ -548,48 +560,164 @@ function toast(msg,d=2000){const t=document.getElementById('toast');t.textConten
 function log(msg,type=''){const p=document.getElementById('logPanel');const d=document.createElement('div');d.className='log-entry '+type;d.textContent=msg;p.appendChild(d);p.scrollTop=p.scrollHeight;while(p.children.length>150)p.removeChild(p.firstChild)}
 function calcPower(o){const atk=o.atk||0,def=o.def||0,mhp=o.maxHp||o.hp||1,agi=o.agility||10;return Math.floor(atk*3+def*2+mhp/5+agi*2)}
 function goldBadge(){return`<span class="gold-badge">灵石：${player.gold}</span>`}
-function dateStr(){return `${player.year}年 ${player.month}月 ${player.day}日`}
+function dateStr(){return`${player.year}年 ${player.month}月 ${player.day}日`}
+function dateMatch(year,month,day){return player.year===year&&player.month===month&&player.day===day}
 
-/* ========== 灵宠技能名称库 ========== */
-function genRandomSkillId(){return 'skill_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
-const XINFA_PREFIX=['玄天','紫霄','太虚','混元','九转','天罡','地煞','阴阳','五行','八卦','星辰','月华','日耀','风雷','冰火','云海','苍穹','碧落','黄泉','幽冥','赤炎','青木','金锋','水灵','土厚'];
-const XINFA_SUFFIX=['心经','心法','真诀','秘诀','宝典','神功','圣经','道经','仙诀','玄功'];
-const JIANFA_PREFIX=['青锋','紫电','流云','飞星','落月','惊鸿','游龙','翔凤','破空','断岳','斩浪','焚天','寒冰','疾风','雷霆','流光','浮光','掠影','追魂','夺魄','诛仙','戮神','斩妖','屠魔'];
-const JIANFA_SUFFIX=['剑法','剑诀','剑术','剑经','剑典','剑谱','剑道','剑意','剑心','剑魂'];
+/* ============================================================
+   十七、灵根/体质/宠/丹/秘籍 生成器
+   ============================================================ */
+function rollSpiritRoot(realmIdx){
+  const high=realmIdx>=20;const mid=realmIdx>=10;
+  const roll=Math.random()*100;
+  if(high){
+    if(roll<1)return{type:'chaos'};
+    if(roll<15)return{type:'mutated',subType:pickRandom(SPIRIT_SUBTYPE.mutated)};
+    if(roll<50)return{type:'heavenly',subType:pickRandom(SPIRIT_SUBTYPE.heavenly)};
+    if(roll<75)return{type:'dual'};
+    if(roll<90)return{type:'triple'};
+    if(roll<97)return{type:'quad'};
+    return{type:'penta'};
+  }else if(mid){
+    if(roll<.3)return{type:'chaos'};
+    if(roll<6)return{type:'mutated',subType:pickRandom(SPIRIT_SUBTYPE.mutated)};
+    if(roll<25)return{type:'heavenly',subType:pickRandom(SPIRIT_SUBTYPE.heavenly)};
+    if(roll<50)return{type:'dual'};
+    if(roll<75)return{type:'triple'};
+    if(roll<90)return{type:'quad'};
+    return{type:'penta'};
+  }else{
+    if(roll<.05)return{type:'chaos'};
+    if(roll<2)return{type:'mutated',subType:pickRandom(SPIRIT_SUBTYPE.mutated)};
+    if(roll<8)return{type:'heavenly',subType:pickRandom(SPIRIT_SUBTYPE.heavenly)};
+    if(roll<20)return{type:'dual'};
+    if(roll<45)return{type:'triple'};
+    if(roll<75)return{type:'quad'};
+    return{type:'penta'};
+  }
+}
+function rollPhysique(realmIdx){
+  const isHigh=realmIdx>=20;const isMid=realmIdx>=10;
+  const roll=Math.random()*100;
+  const specials=['swordBone','daoBody','charmBone','furnaceBody','buddhaHeart','demonBone','pillHeart'];
+  if(isHigh){if(roll<20)return pickRandom(specials);return'none'}
+  else if(isMid){if(roll<8)return pickRandom(specials);return'none'}
+  else{if(roll<2)return pickRandom(specials);return'none'}
+}
+function getRootMult(){const r=SPIRIT_ROOTS[player.spiritRoot.type]||SPIRIT_ROOTS.penta;return{rate:r.rate,mult:r.mult}}
+function getRootDisplay(){const r=SPIRIT_ROOTS[player.spiritRoot.type]||SPIRIT_ROOTS.penta;let name=r.name;if(player.spiritRoot.subType)name=`${player.spiritRoot.subType}系${r.name}`;return{name,color:r.color,desc:r.desc}}
+function getPhysiqueDisplay(){return PHYSIQUES[player.physique]||PHYSIQUES.none}
+function genPillName(used){let tries=0;while(tries<300){const n=PILL_CHARS_A[Math.floor(Math.random()*PILL_CHARS_A.length)]+PILL_CHARS_B[Math.floor(Math.random()*PILL_CHARS_B.length)]+PILL_SUFFIX[Math.floor(Math.random()*PILL_SUFFIX.length)];if(!used.has(n)){used.add(n);return n}tries++}const fb=PILL_CHARS_A[0]+PILL_CHARS_B[0]+PILL_SUFFIX[0]+used.size;used.add(fb);return fb}
+function genPill(quality,idx,used){
+  const name=genPillName(used);const tox=PILL_QUALITY[quality].tox;
+  let effect={},sellPrice=0,desc='';
+  if(quality==='common'){const sub=Math.floor(Math.random()*3);if(sub===0){const v=50+Math.floor(Math.random()*150);effect={heal:v};desc=`服之气血 +${v}。`;sellPrice=Math.floor(v*.5)}else if(sub===1){const v=30+Math.floor(Math.random()*120);effect={mana:v};desc=`服之灵力 +${v}。`;sellPrice=Math.floor(v*.5)}else{const v=50+Math.floor(Math.random()*450);effect={exp:v};desc=`服之修为 +${v}。`;sellPrice=Math.floor(v*.5)}}
+  else if(quality==='mid'){const sub=Math.floor(Math.random()*4);if(sub===0){const v=200+Math.floor(Math.random()*600);effect={heal:v};desc=`服之气血 +${v}。`;sellPrice=Math.floor(v*.5)}else if(sub===1){const v=150+Math.floor(Math.random()*350);effect={mana:v};desc=`服之灵力 +${v}。`;sellPrice=Math.floor(v*.5)}else if(sub===2){const v=500+Math.floor(Math.random()*2500);effect={exp:v};desc=`服之修为 +${v}。`;sellPrice=Math.floor(v*.15)}else{const v=3+Math.floor(Math.random()*6);effect={bonus:v};desc=`突破成功率 +${v}%。`;sellPrice=150+v*50}}
+  else if(quality==='high'){const sub=Math.floor(Math.random()*6);if(sub===0){const v=30+Math.floor(Math.random()*70);effect={maxHp:v};desc=`永久提升气血上限 +${v}。`;sellPrice=200+v*8}else if(sub===1){const v=20+Math.floor(Math.random()*40);effect={maxMp:v};desc=`永久提升灵力上限 +${v}。`;sellPrice=200+v*8}else if(sub===2){const v=3+Math.floor(Math.random()*5);effect={atk:v};desc=`永久提升攻击 +${v}。`;sellPrice=300+v*150}else if(sub===3){const v=2+Math.floor(Math.random()*4);effect={def:v};desc=`永久提升防御 +${v}。`;sellPrice=250+v*150}else if(sub===4){const v=5+Math.floor(Math.random()*10);effect={exp:v*1000};desc=`服之修为 +${v*1000}。`;sellPrice=300+v*80}else{const v=1+Math.floor(Math.random()*3);effect={dodge:v};desc=`永久提升闪避 +${v}%。`;sellPrice=500+v*200}}
+  else{const sub=idx;if(sub===0){effect={maxHp:200,def:8};desc='永久提升气血上限 +200 · 防御 +8。';sellPrice=4000}else if(sub===1){effect={maxMp:120,atk:8};desc='永久提升灵力上限 +120 · 攻击 +8。';sellPrice=4000}else if(sub===2){effect={atk:12,dodge:3};desc='永久提升攻击 +12 · 闪避 +3%。';sellPrice=5500}else{effect={maxHp:300,maxMp:200,atk:15,def:10};desc='永久提升气血上限 +300 · 灵力上限 +200 · 攻击 +15 · 防御 +10。';sellPrice=12000}}
+  const targetCost=Math.floor(sellPrice*.35);const ingredients={};let remaining=targetCost;const herbCount=2+Math.floor(Math.random()*3);
+  for(let i=0;i<herbCount&&remaining>0;i++){const candidates=HERB_LIST.filter(h=>HERB_DB[h]<=remaining&&!ingredients[h]);if(candidates.length===0)break;const herb=candidates[Math.floor(Math.random()*candidates.length)];const maxCount=Math.max(1,Math.floor(remaining/HERB_DB[herb]));const cnt=Math.max(1,Math.min(maxCount,Math.floor(Math.random()*maxCount)+1));ingredients[herb]=cnt;remaining-=cnt*HERB_DB[herb]}
+  const realCost=Object.entries(ingredients).reduce((s,[h,c])=>s+HERB_DB[h]*c,0);
+  return{id:'pill_'+quality+'_'+idx+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),name,quality,desc,effect,ingredients,realCost,sellPrice,buyPrice:Math.floor(sellPrice*2),tox};
+}
+function genAllPills(){const used=new Set();const pool={common:[],mid:[],high:[],supreme:[]};['common','mid','high','supreme'].forEach(q=>{for(let i=0;i<PILL_QUALITY[q].count;i++)pool[q].push(genPill(q,i,used))});return pool}
+function genRandomSkillId(){return'skill_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 function genXinfaName(){return XINFA_PREFIX[Math.floor(Math.random()*XINFA_PREFIX.length)]+XINFA_SUFFIX[Math.floor(Math.random()*XINFA_SUFFIX.length)]}
 function genJianfaName(){return JIANFA_PREFIX[Math.floor(Math.random()*JIANFA_PREFIX.length)]+JIANFA_SUFFIX[Math.floor(Math.random()*JIANFA_SUFFIX.length)]}
 function createXinfa(tier,quality){const q=quality||'common';const m=SKILL_QUALITY[q].mult;const name=genXinfaName();return{id:genRandomSkillId(),name,type:'passive',quality:q,tier:tier||1,level:1,desc:`${name}，温养经脉、强健体魄。`,baseAtk:Math.floor(5*m),baseDef:Math.floor(3*m),perLevelAtk:Math.floor(3*m),perLevelDef:Math.floor(2*m),perTierAtk:Math.floor(20*m),perTierDef:Math.floor(12*m)}}
 function createJianfa(tier,quality){const q=quality||'common';const m=SKILL_QUALITY[q].mult;const name=genJianfaName();return{id:genRandomSkillId(),name,type:'active',quality:q,tier:tier||1,level:1,desc:`${name}，剑随身转，蓄力一击。`,baseMul:+(1.5+m*.35).toFixed(2),perLevelMul:+(.15+m*.06).toFixed(3),perTierMul:+(.3+m*.15).toFixed(2),mpCost:Math.floor(10+(m-1)*6)}}
 function calcSkillBonus(skill){if(skill.type!=='passive')return{atk:0,def:0};const lvl=skill.level,tier=skill.tier;return{atk:(skill.baseAtk||5)+(lvl-1)*(skill.perLevelAtk||3)+(tier-1)*(skill.perTierAtk||20),def:(skill.baseDef||3)+(lvl-1)*(skill.perLevelDef||2)+(tier-1)*(skill.perTierDef||12)}}
 function getSkillEffectStr(skill){if(skill.type==='passive'){const b=calcSkillBonus(skill);return`攻击 +${b.atk} · 防御 +${b.def}`}const mul=(skill.baseMul||1.8)+(skill.level-1)*(skill.perLevelMul||.2)+(skill.tier-1)*(skill.perTierMul||.4);return`伤害 ×${mul.toFixed(1)} · 耗灵 ${skill.mpCost}`}
-function initShopSkillStock(){
-  const cfg=[{q:'common',count:8,price:600},{q:'mid',count:5,price:1500},{q:'high',count:3,price:3000},{q:'supreme',count:2,price:8000}];
-  const xinfa=[],jianfa=[];
-  cfg.forEach(c=>{for(let i=0;i<c.count;i++){const xf=createXinfa(1,c.q);xf.price=c.price;xinfa.push(xf);const jf=createJianfa(1,c.q);jf.price=c.price;jianfa.push(jf)}});
-  return{xinfaStock:xinfa,jianfaStock:jianfa};
+function initShopSkillStock(){const cfg=[{q:'common',count:8,price:600},{q:'mid',count:5,price:1500},{q:'high',count:3,price:3000},{q:'supreme',count:2,price:8000}];const xinfa=[],jianfa=[];cfg.forEach(c=>{for(let i=0;i<c.count;i++){const xf=createXinfa(1,c.q);xf.price=c.price;xinfa.push(xf);const jf=createJianfa(1,c.q);jf.price=c.price;jianfa.push(jf)}});return{xinfaStock:xinfa,jianfaStock:jianfa}}
+function genPetFromSpecies(speciesKey,gender,forcedQuality){const s=PET_SPECIES[speciesKey];const quality=forcedQuality||pickRandom(['common','common','mid','mid','high','supreme']);const qMult=PET_QUALITY_INFO[quality].mult;const yaoBase=s.yaoBase;return{id:genId(),type:'pet',speciesKey,name:s.name,icon:s.icon,desc:s.desc,stat:s.stat,value:s.value,quality,gender:gender||(Math.random()<.5?'公':'母'),dao:`${s.name}灵修`,yaoRealm:0,yaoExp:0,maxHp:Math.floor(yaoBase.hp*qMult),hp:Math.floor(yaoBase.hp*qMult),maxMp:Math.floor(yaoBase.mp*qMult),mp:Math.floor(yaoBase.mp*qMult),atk:Math.floor(yaoBase.atk*qMult),def:Math.floor(yaoBase.def*qMult),agility:yaoBase.agi,favor:50,favDish:s.favDish,favItem:s.favItem,crit:5,critDmg:150,dodge:5}}
+
+/* ============================================================
+   十八、事件系统（主线剧情接口）
+   使用方式：
+     eventSystem.push({type:'dialog',speaker:'xxx',text:'...'});
+     eventSystem.push({type:'choice',options:[{text:'A',next:cbA},{text:'B',next:cbB}]});
+     eventSystem.push({type:'callback',fn:()=>{...}});
+   ============================================================ */
+const eventSystem={
+  queue:[],
+  running:false,
+  _afterAll:null,
+  push(e){this.queue.push(e);if(!this.running)this.process()},
+  process(){
+    if(this.queue.length===0){this.running=false;if(this._afterAll){const cb=this._afterAll;this._afterAll=null;cb()}return}
+    this.running=true;
+    const e=this.queue.shift();
+    if(e.type==='dialog')this.showDialog(e);
+    else if(e.type==='choice')this.showChoice(e);
+    else if(e.type==='callback'){if(e.fn)try{e.fn()}catch(err){console.error(err)}this.process()}
+    else this.process();
+  },
+  next(){this.process()},
+  clear(){this.queue=[];this.running=false},
+  /* 剧情结束后的回调 */
+  afterAll(cb){this._afterAll=cb},
+  showDialog(e){
+    document.getElementById('storyPanelTitle').textContent=e.title||'剧 情';
+    const body=document.getElementById('storyPanelBody');
+    body.innerHTML='';
+    if(e.speaker){const sp=document.createElement('span');sp.className='speaker';sp.textContent=e.speaker;body.appendChild(sp)}
+    const txt=document.createElement('div');txt.textContent=e.text||'';
+    body.appendChild(txt);
+    document.getElementById('storyPanelChoices').innerHTML='';
+    const nextBtn=document.getElementById('storyPanelNext');
+    nextBtn.style.display='block';
+    nextBtn.onclick=()=>{document.getElementById('storyLayer').classList.remove('active');this.process()};
+    document.getElementById('storyLayer').classList.add('active');
+  },
+  showChoice(e){
+    document.getElementById('storyPanelTitle').textContent=e.title||'抉 择';
+    const body=document.getElementById('storyPanelBody');
+    body.innerHTML='';
+    if(e.speaker){const sp=document.createElement('span');sp.className='speaker';sp.textContent=e.speaker;body.appendChild(sp)}
+    const txt=document.createElement('div');txt.textContent=e.text||'';
+    body.appendChild(txt);
+    const ch=document.getElementById('storyPanelChoices');
+    ch.innerHTML='';
+    document.getElementById('storyPanelNext').style.display='none';
+    (e.options||[]).forEach(opt=>{
+      const btn=document.createElement('button');
+      btn.className='story-choice';
+      btn.textContent=opt.text;
+      btn.onclick=()=>{
+        document.getElementById('storyLayer').classList.remove('active');
+        if(opt.fn)try{opt.fn()}catch(err){console.error(err)}
+        this.process();
+      };
+      ch.appendChild(btn);
+    });
+    document.getElementById('storyLayer').classList.add('active');
+  }
+};
+
+/* ============================================================
+   十九、主线事件检测（advanceTime 中调用）
+   ============================================================ */
+function checkStoryEvents(){
+  if(!player)return;
+  STORY_EVENTS.forEach(ev=>{
+    if(ev.once&&player.storyTriggered[ev.trigger])return;
+    if(dateMatch(ev.year,ev.month,ev.day)){
+      player.storyTriggered[ev.trigger]=true;
+      if(typeof triggerStoryEvent==='function')triggerStoryEvent(ev.trigger);
+    }
+  });
+}
+/* 主线剧本入口（预留，内容待写） */
+function triggerStoryEvent(triggerId){
+  log(`【主线】触发事件：${triggerId}`,'story');
+  /* 未来在这里写：
+     eventSystem.push({type:'dialog',speaker:'？',text:'...'});
+     ...
+  */
 }
 
-/* ========== 灵兽生成 ========== */
-function genPetFromSpecies(speciesKey,gender,forcedQuality){
-  const s=PET_SPECIES[speciesKey];
-  const quality=forcedQuality||pickRandom(['common','common','mid','mid','high','supreme']);
-  const qMult=PET_QUALITY_INFO[quality].mult;
-  const yaoBase=s.yaoBase;
-  return{
-    id:genId(),type:'pet',speciesKey,name:s.name,icon:s.icon,desc:s.desc,
-    stat:s.stat,value:s.value,quality,
-    gender:gender||(Math.random()<.5?'公':'母'),
-    dao:`${s.name}灵修`,
-    yaoRealm:0,yaoExp:0,
-    maxHp:Math.floor(yaoBase.hp*qMult),hp:Math.floor(yaoBase.hp*qMult),
-    maxMp:Math.floor(yaoBase.mp*qMult),mp:Math.floor(yaoBase.mp*qMult),
-    atk:Math.floor(yaoBase.atk*qMult),def:Math.floor(yaoBase.def*qMult),agility:yaoBase.agi,
-    favor:50,favDish:s.favDish,favItem:s.favItem,
-    crit:5,critDmg:150,dodge:5
-  };
-}
-
-/* ========== UI ========== */
+/* ============================================================
+   二十、UI 刷新
+   ============================================================ */
 function refreshUI(){
   if(!player)return;
   document.getElementById('topName').textContent=getDisplayName();
@@ -616,18 +744,19 @@ function advanceTime(steps=1){
     if(player.shichenIndex>=12){
       player.shichenIndex=0;
       player.day++;
-      // 每月30天
-      if(player.day>30){
-        player.day=1;player.month++;
-        if(player.month>12){player.month=1;player.year++}
-      }
-      // 每日重置清晨打坐标记
+      if(player.day>30){player.day=1;player.month++;if(player.month>12){player.month=1;player.year++}}
       player.dailyMeditationDate='';
-      log(`【时辰】新的一天开始了：${dateStr()}。`,'system');
+      log(`【时辰】新的一天：${dateStr()}。`,'system');
       autoSave();
+      /* 主线事件检测 */
+      checkStoryEvents();
     }
   }
   processPetHatching(steps);
+  /* 宠物非战斗状态缓慢回血 */
+  if(player.pet&&player.pet.hp<player.pet.maxHp){
+    player.pet.hp=Math.min(player.pet.maxHp,player.pet.hp+Math.ceil(player.pet.maxHp*0.05*steps));
+  }
   updateTimeDisplay();
 }
 function processPetHatching(steps){
@@ -636,15 +765,16 @@ function processPetHatching(steps){
     const egg=player.petEggs[i];
     if(egg.remainingHours===undefined||egg.readyToHatch)continue;
     egg.remainingHours-=steps;
-    if(egg.remainingHours<=0){egg.remainingHours=0;egg.readyToHatch=true;log(`【灵兽】「${egg.name}」孵化完成了！`,'good')}
+    if(egg.remainingHours<=0){egg.remainingHours=0;egg.readyToHatch=true;log(`【灵兽】「${egg.name}」孵化完成。`,'good')}
   }
 }
-/* 丹毒检查 */
 function checkToxDeath(){
   if(player.pillToxicity>=100){
-    log(`【丹毒】丹毒爆发，你毒发身亡……`,'bad');
-    alert('丹毒累积至100，你毒发身亡！游戏将自动重置。');
-    doReincarnate();
+    log('【丹毒】丹毒爆发，你毒发身亡……','bad');
+    if(typeof eventSystem!=='undefined'){
+      eventSystem.push({type:'dialog',title:'丹 毒 爆 发',text:'丹毒攻心，你眼前一黑。\n这一世，难道就这样了吗……',});
+      eventSystem.push({type:'callback',fn:()=>{doReincarnate()}});
+    }else{doReincarnate()}
     return true;
   }
   return false;
@@ -652,10 +782,12 @@ function checkToxDeath(){
 function addToxicity(v){
   player.pillToxicity=Math.min(100,(player.pillToxicity||0)+v);
   if(checkToxDeath())return;
-  if(v>0)log(`【丹毒】丹毒 +${v}（当前 ${player.pillToxicity}/100）`,'bad');
+  if(v>0)log(`【丹毒】丹毒 +${v}（当前 ${Math.floor(player.pillToxicity)}/100）`,'bad');
 }
 
-/* ========== 新手礼包 ========== */
+/* ============================================================
+   二十一、新手礼包
+   ============================================================ */
 function grantNewbiePack(){
   if(player.newbiePackClaimed)return;
   const xj=createXinfa(1,'common');const jf=createJianfa(1,'common');
@@ -666,7 +798,159 @@ function grantNewbiePack(){
   log('【礼包】获得新手礼包：基础心经 · 基础剑法！','good');
 }
 
-/* ========== 修炼/突破 ========== */
+/* ============================================================
+   二十二、姓名 / 启动 / 存档
+   ============================================================ */
+function showNameModal(){
+  localStorage.setItem(STORY_KEY,'1');
+  document.getElementById('storyModal').style.display='none';
+  document.getElementById('nameModal').classList.add('active');
+  updateNameButtonState();
+  setTimeout(()=>{const el=document.getElementById('nameSur');if(el)el.focus()},200);
+}
+function updateNamePreview(){
+  const sur=document.getElementById('nameSur').value.trim(),given=document.getElementById('nameGiven').value.trim(),dao=document.getElementById('nameDao').value.trim(),nick=document.getElementById('nameNick').value.trim();
+  const full=sur+given;let txt='';
+  if(full&&dao)txt=`${full}（${dao}）`;else if(full)txt=full;else if(dao)txt=dao;else txt='—';
+  document.getElementById('namePreview').textContent=txt;
+  document.getElementById('namePreviewNick').textContent=nick?`小名：${nick}`:'';
+  updateNameButtonState();
+}
+function updateNameButtonState(){
+  const sur=document.getElementById('nameSur')?.value.trim()||'';
+  const given=document.getElementById('nameGiven')?.value.trim()||'';
+  const dao=document.getElementById('nameDao')?.value.trim()||'';
+  const btn=document.getElementById('confirmNameBtn');
+  if(btn)btn.disabled=!(sur&&given&&dao);
+}
+document.addEventListener('input',function(e){if(['nameSur','nameGiven','nameDao','nameNick'].includes(e.target.id))updateNamePreview()});
+function confirmName(){
+  const sur=document.getElementById('nameSur').value.trim(),given=document.getElementById('nameGiven').value.trim(),dao=document.getElementById('nameDao').value.trim(),nickname=document.getElementById('nameNick').value.trim();
+  if(!sur||!given||!dao){toast('姓、名、道号必须填写');return}
+  if(sur.length>2){toast('姓≤2字');return}
+  if(given.length>4){toast('名≤4字');return}
+  if(dao.length>6){toast('道号≤6字');return}
+  if(nickname.length>4){toast('小名≤4字');return}
+  const nameData={sur,given,dao,nickname};
+  localStorage.setItem(NAME_KEY,JSON.stringify(nameData));
+  document.getElementById('nameModal').classList.remove('active');
+  initGame(nameData);
+}
+function startGame(){localStorage.setItem(STORY_KEY,'1');showNameModal()}
+
+function initGame(nameData){
+  document.getElementById('game').style.display='block';
+  initSaves();
+  const autoRaw=localStorage.getItem(AUTO_KEY);
+  let loaded=false;
+  if(autoRaw){
+    try{
+      const data=JSON.parse(autoRaw);
+      const def=defaultPlayer();
+      for(const k in def)if(data[k]===undefined)data[k]=def[k];
+      if(typeof data.shichenIndex!=='number'||data.shichenIndex<0||data.shichenIndex>11)data.shichenIndex=getRealShichenIndex();
+      if(!data.name)data.name={sur:'',given:'',dao:'',nickname:''};
+      if(data.name.dao===undefined)data.name.dao='';if(data.name.nickname===undefined)data.name.nickname='';
+      if(!Array.isArray(data.skills))data.skills=[];if(!Array.isArray(data.relations))data.relations=[];if(!Array.isArray(data.petEggs))data.petEggs=[];
+      if(!Array.isArray(data.storyRelations))data.storyRelations=JSON.parse(JSON.stringify(Object.values(STORY_NPCS)));
+      if(!data.storyFlags)data.storyFlags={};
+      if(!data.storyTriggered)data.storyTriggered={};
+      if(!data.spiritRoot)data.spiritRoot=rollSpiritRoot(0);
+      if(!data.physique)data.physique='none';
+      if(typeof data.year!=='number')data.year=1;if(typeof data.month!=='number')data.month=1;
+      if(typeof data.pillToxicity!=='number')data.pillToxicity=0;
+      if(!Array.isArray(data.shopXinfaStock)||data.shopXinfaStock.length===0){const s=initShopSkillStock();data.shopXinfaStock=s.xinfaStock;data.shopJianfaStock=s.jianfaStock}
+      if(!data.pillDB||!data.pillDB.common)data.pillDB=genAllPills();
+      player=data;loaded=true;
+    }catch(e){}
+  }
+  if(!loaded){
+    player=defaultPlayer();
+    if(nameData)player.name=nameData;
+    else{const savedName=localStorage.getItem(NAME_KEY);if(savedName){try{player.name=JSON.parse(savedName)}catch{}}if(!player.name.dao)player.name.dao='';if(!player.name.nickname)player.name.nickname=''}
+    grantNewbiePack();
+  }else if(nameData){
+    if(!player.name.sur&&!player.name.given&&!player.name.dao)player.name=nameData;
+  }
+  refreshUI();
+  if(loaded)log(`【系统】读取存档成功，${dateStr()}继续修行。`,'system');
+  else{
+    const rd=getRootDisplay();
+    log(`【修仙世界】${getDisplayName()}，灵根【${rd.name}】，一切从零开始。`,'system');
+    log('【提示】每月25号黑市开放。丹毒满100会毒发身亡。','system');
+    log('【主线】这一世的复仇才刚刚开始……','story');
+  }
+  autoSave();
+}
+
+function initSaves(){try{const raw=localStorage.getItem(STORAGE_KEY);saveSlots=raw?JSON.parse(raw):new Array(MANUAL_SLOTS).fill(null)}catch{saveSlots=new Array(MANUAL_SLOTS).fill(null)}if(!Array.isArray(saveSlots)||saveSlots.length<MANUAL_SLOTS){const t=new Array(MANUAL_SLOTS).fill(null);if(Array.isArray(saveSlots))for(let i=0;i<Math.min(saveSlots.length,MANUAL_SLOTS);i++)t[i]=saveSlots[i];saveSlots=t}}
+function saveToSlot(slotIndex){if(!player)return;const data=JSON.parse(JSON.stringify(player));data._saveTime=new Date().toLocaleString('zh-CN');if(slotIndex===AUTO_SLOT)localStorage.setItem(AUTO_KEY,JSON.stringify(data));else{saveSlots[slotIndex-1]=data;localStorage.setItem(STORAGE_KEY,JSON.stringify(saveSlots))}toast('存档成功')}
+function loadFromSlot(slotIndex){
+  let data;
+  if(slotIndex===AUTO_SLOT){const raw=localStorage.getItem(AUTO_KEY);if(!raw){toast('无自动存档');return}data=JSON.parse(raw)}
+  else{if(!saveSlots[slotIndex-1]){toast('空存档位');return}data=saveSlots[slotIndex-1]}
+  const def=defaultPlayer();
+  for(const k in def)if(data[k]===undefined)data[k]=def[k];
+  if(!data.name)data.name={sur:'',given:'',dao:'',nickname:''};
+  if(data.name.dao===undefined)data.name.dao='';if(data.name.nickname===undefined)data.name.nickname='';
+  if(!Array.isArray(data.skills))data.skills=[];if(!Array.isArray(data.relations))data.relations=[];if(!Array.isArray(data.petEggs))data.petEggs=[];
+  if(!Array.isArray(data.storyRelations))data.storyRelations=JSON.parse(JSON.stringify(Object.values(STORY_NPCS)));
+  if(!data.storyFlags)data.storyFlags={};if(!data.storyTriggered)data.storyTriggered={};
+  if(!data.spiritRoot)data.spiritRoot=rollSpiritRoot(0);
+  if(!data.physique)data.physique='none';
+  if(typeof data.year!=='number')data.year=1;if(typeof data.month!=='number')data.month=1;
+  if(typeof data.pillToxicity!=='number')data.pillToxicity=0;
+  if(!Array.isArray(data.shopXinfaStock)||data.shopXinfaStock.length===0){const s=initShopSkillStock();data.shopXinfaStock=s.xinfaStock;data.shopJianfaStock=s.jianfaStock}
+  if(!data.pillDB||!data.pillDB.common)data.pillDB=genAllPills();
+  player=data;refreshUI();closeModal();toast('读档成功');
+}
+function deleteSlot(slotIndex){if(slotIndex===AUTO_SLOT)localStorage.removeItem(AUTO_KEY);else{saveSlots[slotIndex-1]=null;localStorage.setItem(STORAGE_KEY,JSON.stringify(saveSlots))}openSavePanel()}
+function autoSave(){saveToSlot(AUTO_SLOT)}
+function openSavePanel(){
+  let html=`<div class="modal-title">存 档 · 读 档</div>`;
+  const autoRaw=localStorage.getItem(AUTO_KEY);let autoData=null;try{autoData=autoRaw?JSON.parse(autoRaw):null}catch{}
+  html+=`<div class="save-slot auto"><div class="slot-info"><div class="slot-title">📁 自动存档</div><div class="slot-detail">${autoData?`${autoData._saveTime||'—'} · ${autoData.year||1}年${autoData.month||1}月${autoData.day||1}日`:'暂无'}</div></div><div class="slot-actions">${autoData?`<button onclick="loadFromSlot(0)">读 档</button>`:''}${autoData?`<button onclick="deleteSlot(0);openSavePanel();">删 除</button>`:''}</div></div>`;
+  for(let i=0;i<MANUAL_SLOTS;i++){
+    const d=saveSlots[i];
+    html+=`<div class="save-slot"><div class="slot-info"><div class="slot-title">存档位 ${i+1}</div><div class="slot-detail">${d?`${d._saveTime||'—'} · ${d.year||1}年${d.month||1}月${d.day||1}日`:'空'}</div></div><div class="slot-actions"><button onclick="saveToSlot(${i+1});openSavePanel();">存 档</button>${d?`<button onclick="loadFromSlot(${i+1})">读 档</button>`:''}${d?`<button onclick="deleteSlot(${i+1});openSavePanel();">删 除</button>`:''}</div></div>`;
+  }
+  html+=`<button class="modal-close" onclick="closeModal()">关 闭</button>`;
+  showModal(html);
+}
+
+/* ============================================================
+   二十三、通用弹窗
+   ============================================================ */
+function showModal(html){document.getElementById('modalContent').innerHTML=html;document.getElementById('modalOverlay').classList.add('active')}
+function closeModal(){
+  if(typeof combatState!=='undefined'&&combatState.active){toast('战斗中无法离开');return}
+  document.getElementById('modalOverlay').classList.remove('active');
+}
+document.getElementById('modalOverlay').addEventListener('click',function(e){if(e.target===this)closeModal()});
+
+/* ============================================================
+   二十四、持久化
+   ============================================================ */
+window.addEventListener('beforeunload',function(){if(!player)return;try{const data=JSON.parse(JSON.stringify(player));data._saveTime=new Date().toLocaleString('zh-CN');localStorage.setItem(AUTO_KEY,JSON.stringify(data))}catch{}});
+setInterval(function(){if(!player)return;try{const data=JSON.parse(JSON.stringify(player));data._saveTime=new Date().toLocaleString('zh-CN');localStorage.setItem(AUTO_KEY,JSON.stringify(data))}catch{}},60000);
+
+/* ============================================================
+   二十五、页面载入
+   ============================================================ */
+window.addEventListener('DOMContentLoaded',function(){
+  const storySeen=localStorage.getItem(STORY_KEY);
+  const autoRaw=localStorage.getItem(AUTO_KEY);
+  const savedName=localStorage.getItem(NAME_KEY);
+  if(storySeen){
+    document.getElementById('storyModal').style.display='none';
+    if(autoRaw||savedName)initGame();
+    else{document.getElementById('nameModal').classList.add('active');updateNameButtonState()}
+  }else document.getElementById('storyModal').style.display='flex';
+});
+
+/* ============================================================
+   二十六、修炼 / 突破 / 打坐 / 闭关
+   ============================================================ */
 function doCultivate(){
   if(player.realmIndex<REALMS.length-1&&player.exp>=getExpNeeded()){openBreakthrough();return}
   const s=SHICHEN[player.shichenIndex%12];
@@ -721,27 +1005,19 @@ function applyBreakthroughGrowth(){
   player.def+=Math.floor((2+idx*0.8)*rm.mult);
   player.agility+=1;
   const cur=REALMS[idx],prev=REALMS[idx-1];
-  if(prev&&cur.name!==prev.name){
-    player.dodge=Math.min(35,player.dodge+2);
-    player.crit=Math.min(30,player.crit+1);
-    player.critDmg+=5;player.agility+=2;
-  }
+  if(prev&&cur.name!==prev.name){player.dodge=Math.min(35,player.dodge+2);player.crit=Math.min(30,player.crit+1);player.critDmg+=5;player.agility+=2}
   player.hp=player.maxHp;player.mp=player.maxMp;
 }
-
-/* ========== 打坐 ========== */
 function doRest(){
   const s=SHICHEN[player.shichenIndex%12];
   const todayKey=`${player.year}-${player.month}-${player.day}`;
-  // 清晨卯时打坐可解丹毒，每日一次
   let toxNote='';
   if(s.name==='卯时'&&player.dailyMeditationDate!==todayKey){
     if(player.pillToxicity>0){
       const red=Math.min(2,player.pillToxicity);
-      player.pillToxicity-=red;
-      player.dailyMeditationDate=todayKey;
+      player.pillToxicity-=red;player.dailyMeditationDate=todayKey;
       toxNote=`（清晨打坐，丹毒 -${red}）`;
-      log(`【打坐】清晨吐纳，化解丹毒 -${red} 点（当前 ${player.pillToxicity}/100）。`,'good');
+      log(`【打坐】清晨吐纳，化解丹毒 -${red} 点（当前 ${Math.floor(player.pillToxicity)}/100）。`,'good');
     }
   }
   let hpGain,mpGain;
@@ -749,13 +1025,14 @@ function doRest(){
   else if(['戌时','亥时'].includes(s.name)){hpGain=Math.floor(player.maxHp*.4);mpGain=Math.floor(player.maxMp*.4)}
   else{hpGain=Math.floor(player.maxHp*.25);mpGain=Math.floor(player.maxMp*.25)}
   const oh=player.hp,om=player.mp;
-  player.hp=Math.min(player.maxHp,player.hp+hpGain);
-  player.mp=Math.min(player.maxMp,player.mp+mpGain);
+  player.hp=Math.min(player.maxHp,player.hp+hpGain);player.mp=Math.min(player.maxMp,player.mp+mpGain);
   log(`【打坐】气血 +${player.hp-oh}，灵力 +${player.mp-om}。${toxNote}`,'good');
   advanceTime();refreshUI();
 }
 
-/* ========== 数量选择器 ========== */
+/* ============================================================
+   二十七、数量选择器
+   ============================================================ */
 let qtyCallback=null;let qtyUnitPrice=0;let qtyMax=1;
 function showQuantityPicker(title,unitPrice,maxQty,cb,unit='个'){
   qtyCallback=cb;qtyUnitPrice=unitPrice;qtyMax=maxQty;
@@ -766,31 +1043,27 @@ function updateQtyTotal(){const q=Math.max(1,Math.min(qtyMax,parseInt(document.g
 function setMaxQty(){document.getElementById('qtyInput').value=qtyMax;updateQtyTotal()}
 function confirmQuantity(){const q=Math.max(1,Math.min(qtyMax,parseInt(document.getElementById('qtyInput').value)||1));if(player.gold<q*qtyUnitPrice){toast('灵石不足');return}qtyCallback(q)}
 
-/* ========== 宅邸 ========== */
+/* ============================================================
+   二十八、宅邸 / 院子 / 小屋 / 厨房 / 洞府
+   ============================================================ */
 function openHome(){
-  let html=`<div class="modal-title">宅 邸</div><div class="sub-menu cols-3"><button class="sub-option" onclick="openYard()"><span class="icon">🌿</span>院 子<span class="sub">练剑 · 炼丹</span></button><button class="sub-option" onclick="openCabin()"><span class="icon">🏠</span>小 屋<span class="sub">修炼 · 打坐</span></button><button class="sub-option" onclick="openKitchen()"><span class="icon">🍳</span>厨 房<span class="sub">做 菜</span></button></div><div class="sub-menu"><button class="sub-option" onclick="openCave()"><span class="icon">⛰</span>洞 府<span class="sub">闭 关 修 炼</span></button></div><button class="modal-close" onclick="closeModal()">关 闭</button>`;
+  let html=`<div class="modal-title">宅 邸</div><div class="sub-menu cols-3"><button class="sub-option" onclick="openYard()"><span class="icon">🌿</span>院 子<span class="sub">练剑 · 炼丹</span></button><button class="sub-option" onclick="openCabin()"><span class="icon">🏠</span>小 屋<span class="sub">修炼 · 打坐</span></button><button class="sub-option" onclick="openKitchen()"><span class="icon">🍳</span>厨 房<span class="sub">做 菜</span></button></div><div class="sub-menu" style="margin-top:12px"><button class="sub-option" onclick="openCave()"><span class="icon">⛰</span>洞 府<span class="sub">闭 关 修 炼</span></button></div><button class="modal-close" onclick="closeModal()">关 闭</button>`;
   showModal(html);
 }
 function openCave(){
-  let html=`<div class="modal-title">洞 府 · 闭 关</div><div style="text-align:center;font-size:13px;color:#8b7355;margin-bottom:12px;line-height:1.9;">闭关期间时间流逝，无法行动，但修为飞速增长。<br>灵根倍率 ×${getRootMult().rate} · 每秒额外获得修为</div><div class="card-list">`;
-  const opts=[
-    {label:'闭关 1 天',days:1,exp:500,mult:1},
-    {label:'闭关 1 周',days:7,exp:4000,mult:1.15},
-    {label:'闭关 1 月',days:30,exp:20000,mult:1.35},
-  ];
+  let html=`<div class="modal-title">洞 府 · 闭 关</div><div style="text-align:center;font-size:13px;color:#8b7355;margin-bottom:12px;line-height:1.9;">闭关期间时间流逝，无法行动，但修为飞速增长。<br>灵根倍率 ×${getRootMult().rate}</div><div class="card-list">`;
+  const opts=[{label:'闭关 1 天',days:1,exp:500,mult:1},{label:'闭关 1 周',days:7,exp:4000,mult:1.15},{label:'闭关 1 月',days:30,exp:20000,mult:1.35}];
   opts.forEach(o=>{
-    const rm=getRootMult();
-    const gain=Math.floor(o.exp*rm.rate*o.mult);
+    const rm=getRootMult();const gain=Math.floor(o.exp*rm.rate*o.mult);
     html+=`<div class="card"><div class="card-title"><span>${o.label}</span><span style="font-size:12px;color:#a67c00;">预期修为 +${gain}</span></div><div class="card-actions"><button onclick="doSeclusion(${o.days},${gain})">开 始 闭 关</button></div></div>`;
   });
   html+=`</div><button class="modal-close" onclick="openHome()">返 回</button>`;
   showModal(html);
 }
 function doSeclusion(days,gain){
-  if(!confirm(`确定闭关 ${days} 天？闭关期间无法进行其他操作。`))return;
-  const steps=days*12; // 每天12时辰
+  if(!confirm(`确定闭关 ${days} 天？`))return;
+  const steps=days*12;
   player.exp+=gain;
-  // 时间推进但不触发自动存档日志（这里直接加）
   for(let i=0;i<steps;i++){
     player.shichenIndex++;
     if(player.shichenIndex>=12){
@@ -799,17 +1072,17 @@ function doSeclusion(days,gain){
       player.dailyMeditationDate='';
     }
   }
-  // 灵宠孵化也会推进
   processPetHatching(steps);
+  if(player.pet&&player.pet.hp<player.pet.maxHp)player.pet.hp=player.pet.maxHp;
   log(`【闭关】闭关 ${days} 天，修为 +${gain}！`,'good');
   toast(`闭关结束，修为 +${gain}`);
+  checkStoryEvents();
   refreshUI();closeModal();
-  // 突破检查
-  if(player.realmIndex<REALMS.length-1&&player.exp>=getExpNeeded()){toast('修为已满，可尝试突破！')}
+  if(player.realmIndex<REALMS.length-1&&player.exp>=getExpNeeded())toast('修为已满，可尝试突破！');
   autoSave();
 }
 function openYard(){
-  let html=`<div class="modal-title">院 子</div><div style="text-align:center;margin-bottom:10px;">${goldBadge()}</div><div class="sub-menu"><button class="sub-option" onclick="openSwordPractice()"><span class="icon">⚔</span>练 剑 法<span class="sub">一时辰 · 提升剑法</span></button><button class="sub-option" onclick="openAlchemy()"><span class="icon">⚗</span>炼 丹<span class="sub">一时辰 · 消耗灵草</span></button></div><button class="modal-close" onclick="openHome()">返 回</button>`;
+  let html=`<div class="modal-title">院 子</div><div style="text-align:center;margin-bottom:10px;">${goldBadge()}</div><div class="sub-menu"><button class="sub-option" onclick="openSwordPractice()"><span class="icon">⚔</span>练 剑 法<span class="sub">提升剑法</span></button><button class="sub-option" onclick="openAlchemy()"><span class="icon">⚗</span>炼 丹<span class="sub">消耗灵草</span></button></div><button class="modal-close" onclick="openHome()">返 回</button>`;
   showModal(html);
 }
 function openSwordPractice(){
@@ -839,44 +1112,28 @@ function doYardPractice(skillId){
   advanceTime();refreshUI();openSwordPractice();
 }
 
-/* ========== 炼丹 ========== */
+/* ============================================================
+   二十九、炼丹
+   ============================================================ */
 let alchemyTab='common';
 function openAlchemy(){
   const tabs=[{key:'common',label:'下品'},{key:'mid',label:'中品'},{key:'high',label:'上品'},{key:'supreme',label:'顶级'}];
-  let html=`<div class="modal-title">炼 丹</div><div style="text-align:center;margin-bottom:10px;">${goldBadge()} · 炼丹造诣 ${player.alchemy||0}</div>`;
-  html+=`<div class="shop-tabs">`;
+  let html=`<div class="modal-title">炼 丹</div><div style="text-align:center;margin-bottom:10px;">${goldBadge()} · 炼丹造诣 ${player.alchemy||0}</div><div class="shop-tabs">`;
   tabs.forEach(t=>{html+=`<button class="shop-tab ${alchemyTab===t.key?'active':''}" onclick="alchemyTab='${t.key}';openAlchemy()">${t.label}</button>`});
   html+=`</div>`;
   const pool=player.pillDB[alchemyTab]||[];
   html+=`<div class="card-list">`;
   pool.forEach(p=>{
     const canCook=canCraftPill(p);
-    const ingStr=Object.entries(p.ingredients).map(([h,c])=>{const have=player.bag.filter(it=>it.name===h).length;return `${h}×${c}${have<c?`<span style="color:#c0392b;">(缺${c-have})</span>`:''}`}).join(' ');
+    const ingStr=Object.entries(p.ingredients).map(([h,c])=>{const have=player.bag.filter(it=>it.name===h).length;return`${h}×${c}${have<c?`<span style="color:#c0392b;">(缺${c-have})</span>`:''}`}).join(' ');
     const qinfo=PILL_QUALITY[p.quality];
-    html+=`<div class="card">
-      <div class="card-title"><span>${p.name} <span class="tag tag-${p.quality}">${qinfo.name}</span></span><span style="font-size:11px;color:#8b7355;">材料约 ${p.realCost} · 丹毒+${p.tox}</span></div>
-      <div class="card-desc">${p.desc}</div>
-      <div style="font-size:11px;color:#8b7355;margin-bottom:8px;">材料：${ingStr}</div>
-      <div class="card-actions"><button ${canCook?'':'disabled'} onclick="doAlchemy('${p.id}')">炼 制</button></div>
-    </div>`;
+    html+=`<div class="card"><div class="card-title"><span>${p.name} <span class="tag tag-${p.quality}">${qinfo.name}</span></span><span style="font-size:11px;color:#8b7355;">材料约 ${p.realCost} · 丹毒+${p.tox}</span></div><div class="card-desc">${p.desc}</div><div style="font-size:11px;color:#8b7355;margin-bottom:8px;">材料：${ingStr}</div><div class="card-actions"><button ${canCook?'':'disabled'} onclick="doAlchemy('${p.id}')">炼 制</button></div></div>`;
   });
   html+=`</div><button class="modal-close" onclick="openYard()">返 回</button>`;
   showModal(html);
 }
-function canCraftPill(p){
-  for(const[h,c]of Object.entries(p.ingredients)){
-    if(player.bag.filter(it=>it.name===h).length<c)return false;
-  }
-  return true;
-}
-function craftPillConsume(p){
-  for(const[h,c]of Object.entries(p.ingredients)){
-    let toRemove=c;
-    for(let k=player.bag.length-1;k>=0&&toRemove>0;k--){
-      if(player.bag[k].name===h){player.bag.splice(k,1);toRemove--}
-    }
-  }
-}
+function canCraftPill(p){for(const[h,c]of Object.entries(p.ingredients)){if(player.bag.filter(it=>it.name===h).length<c)return false}return true}
+function craftPillConsume(p){for(const[h,c]of Object.entries(p.ingredients)){let toRemove=c;for(let k=player.bag.length-1;k>=0&&toRemove>0;k--){if(player.bag[k].name===h){player.bag.splice(k,1);toRemove--}}}}
 function doAlchemy(pillId){
   const pool=player.pillDB[alchemyTab]||[];
   const p=pool.find(x=>x.id===pillId);if(!p)return;
@@ -905,8 +1162,6 @@ function openCabin(){
   let html=`<div class="modal-title">小 屋</div><div class="sub-menu cols-3"><button class="sub-option" onclick="closeModal();doCultivate();"><span class="icon">☯</span>修 炼<span class="sub">+修为</span></button><button class="sub-option" onclick="closeModal();doRest();"><span class="icon">🧘</span>打 坐<span class="sub">回气血</span></button><button class="sub-option" onclick="openSkills()"><span class="icon">📖</span>练 心 经<span class="sub">查看 · 升级</span></button></div><button class="modal-close" onclick="openHome()">返 回</button>`;
   showModal(html);
 }
-
-/* ========== 厨房 ========== */
 function openKitchen(){
   let html=`<div class="modal-title">厨 房</div><div style="text-align:center;font-size:13px;color:#8b7355;margin-bottom:12px;">厨艺值：<b style="color:#c0392b;">${player.cooking}</b> · 成功率：<b style="color:#4a7a4a;">${Math.min(95,Math.round(50+player.cooking*2))}%</b></div><div class="card-list">`;
   RECIPE_DB.forEach((r,i)=>{
@@ -916,7 +1171,7 @@ function openKitchen(){
       ingredientStr+=`${name}×${count}`+(have<count?`<span style="color:#c0392b;">(缺${count-have})</span>`:'')+' ';
       if(have<count)canCook=false;
     }
-    html+=`<div class="card"><div class="card-title"><span>${r.name}</span><span style="font-size:12px;color:#a67c00;">参考价 ${r.dishPrice}</span></div><div class="card-desc">${r.desc} · ${r.effect==='hp'?'回血':'回灵'} +${r.value}</div><div style="font-size:11px;color:#8b7355;margin-bottom:8px;">材料：${ingredientStr}</div><div class="card-actions"><button ${canCook?'':'disabled'} onclick="cookDish(${i})">烹 制</button></div></div>`;
+    html+=`<div class="card"><div class="card-title"><span>${r.name}</span><span style="font-size:12px;color:#a67c00;">参考价 ${r.dishPrice}</span></div><div class="card-desc">${r.desc}</div><div style="font-size:11px;color:#8b7355;margin-bottom:8px;">材料：${ingredientStr}</div><div class="card-actions"><button ${canCook?'':'disabled'} onclick="cookDish(${i})">烹 制</button></div></div>`;
   });
   html+=`</div><button class="modal-close" onclick="openHome()">返 回</button>`;
   showModal(html);
@@ -936,33 +1191,34 @@ function cookDish(i){
   refreshUI();openKitchen();
 }
 
-/* ========== 出门 ========== */
+/* ============================================================
+   三十、出门
+   ============================================================ */
 function openTravel(){
   let html=`<div class="modal-title">出 门 历 练</div><div class="sub-menu cols-2"><button class="sub-option" onclick="openSecretRealms()"><span class="icon">⚔</span>秘 境<span class="sub">斩妖夺宝</span></button><button class="sub-option" onclick="openShop()"><span class="icon">🏪</span>商 店<span class="sub">购物 · 秘籍</span></button><button class="sub-option" onclick="openRoam()"><span class="icon">🚶</span>游 历<span class="sub">三时辰 · 机缘</span></button><button class="sub-option" onclick="openRestaurant()"><span class="icon">🍜</span>酒 楼<span class="sub">食材 · 品尝</span></button></div>`;
-  // 每月25号黑市
   if(player.day===25){
-    html+=`<div style="margin-top:12px;"><button class="sub-option" style="width:100%;border-color:#a8342a;color:#a8342a;" onclick="openBlackMarket()"><span class="icon">🏴</span>黑 市 · 拍 卖 会<span class="sub">稀有宝物 · 灵根 · 根骨</span></button></div>`;
+    html+=`<div style="margin-top:12px"><button class="sub-option" style="width:100%;border-color:#a8342a;color:#a8342a;" onclick="openBlackMarket()"><span class="icon">🏴</span>黑 市 · 拍 卖 会<span class="sub">稀有宝物 · 灵根 · 根骨</span></button></div>`;
   }
   html+=`<button class="modal-close" onclick="closeModal()">关 闭</button>`;
   showModal(html);
 }
 
-/* ========== 黑市拍卖 ========== */
+/* ============================================================
+   三十一、黑市拍卖
+   ============================================================ */
 function openBlackMarket(){
-  // 每次进入随机生成拍卖品（读档后根据日期不会重复）
   const dateKey=`${player.year}-${player.month}-${player.day}`;
   if(player.lastAuctionDate!==dateKey){
     player._auctionItems=genAuctionItems();
     player.lastAuctionDate=dateKey;
   }
   const items=player._auctionItems||genAuctionItems();
-  let html=`<div class="modal-title">黑 市 · 拍 卖 会</div><div style="text-align:center;margin-bottom:10px;">${goldBadge()}</div><div style="font-size:12px;color:#8b7355;text-align:center;margin-bottom:12px;">每月25号，黑市开市。物品稀有，一掷千金。</div><div class="card-list">`;
+  let html=`<div class="modal-title">黑 市 · 拍 卖 会</div><div style="text-align:center;margin-bottom:10px;">${goldBadge()}</div><div style="font-size:12px;color:#8b7355;text-align:center;margin-bottom:12px;">每月25号，黑市开市。</div><div class="card-list">`;
   items.forEach((it,idx)=>{
     const canAfford=player.gold>=it.price;
-    const purchased=it.purchased;
     html+=`<div class="card"><div class="card-title"><span>${it.name}</span><span style="font-size:12px;color:#a67c00;">${it.price} 灵石</span></div><div class="card-desc">${it.desc}</div><div class="card-actions">`;
-    if(purchased)html+=`<span style="color:#4a7a4a;font-size:12px;">已拍下</span>`;
-    else html+=`<button ${canAfford?'':'disabled'} onclick="buyAuction(${idx})">拍 下（${it.price} 灵石）${canAfford?'':' — 灵石不足'}</button>`;
+    if(it.purchased)html+=`<span style="color:#4a7a4a;font-size:12px;">已拍下</span>`;
+    else html+=`<button ${canAfford?'':'disabled'} onclick="buyAuction(${idx})">拍 下${canAfford?'':' — 灵石不足'}</button>`;
     html+=`</div></div>`;
   });
   html+=`</div><button class="modal-close" onclick="openTravel()">离 开</button>`;
@@ -970,19 +1226,16 @@ function openBlackMarket(){
 }
 function genAuctionItems(){
   const items=[];
-  // 固定拍卖稀有物品
   const rarityPool=[
-    {type:'pill',name:'净毒药水',desc:'饮下可解 -10 丹毒。黑市稀有货。',price:3000,effect:'antitox',value:10},
-    {type:'pill',name:'净毒药水',desc:'饮下可解 -10 丹毒。黑市稀有货。',price:3000,effect:'antitox',value:10},
-    {type:'material',name:'改髓丹材料·混元草',desc:'炼制改髓丹的主料，极其稀有。',price:5000},
-    {type:'material',name:'改髓丹材料·混元草',desc:'炼制改髓丹的主料，极其稀有。',price:5000},
+    {type:'pill',name:'净毒药水',desc:'饮下可解 -10 丹毒。',price:3000,effect:'antitox',value:10},
+    {type:'pill',name:'净毒药水',desc:'饮下可解 -10 丹毒。',price:3000,effect:'antitox',value:10},
+    {type:'material',name:'改髓丹材料·混元草',desc:'炼制改髓丹的主料。',price:5000},
+    {type:'material',name:'改髓丹材料·混元草',desc:'炼制改髓丹的主料。',price:5000},
     {type:'pet',name:'稀有灵兽蛋',desc:'孵化出稀有灵兽，品质随机。',price:8000},
     {type:'weapon',name:'九霄神剑',desc:'上品法器，攻击+80 暴击+10%。',price:12000},
     {type:'skillbook',name:'上品秘籍',desc:'随机上品心法或剑法。',price:5000},
-    {type:'gift',name:'极品灵酿',desc:'黑市珍品，送礼佳品。',price:2000},
-    {type:'pill',name:'净毒药水',desc:'饮下可解 -10 丹毒。黑市稀有货。',price:3000,effect:'antitox',value:10}
+    {type:'gift',name:'极品灵酿',desc:'黑市珍品，送礼佳品。',price:2000}
   ];
-  // 极小概率：灵根/根骨
   const ultraRare=[
     {type:'root',name:'天灵根果',desc:'食用后可获得天灵根。使用后无法卸下！',price:50000},
     {type:'physique',name:'剑骨重塑丹',desc:'服用后获得天生剑骨。使用后无法卸下！',price:60000},
@@ -990,24 +1243,14 @@ function genAuctionItems(){
     {type:'physique',name:'道体丹',desc:'服用后获得天生道体。使用后无法卸下！',price:60000},
     {type:'root',name:'混沌种子',desc:'食用后可将灵根提升为混沌体。使用后无法卸下！',price:200000}
   ];
-  // 大约8-10件普通稀有
   const cnt=8+Math.floor(Math.random()*3);
-  for(let i=0;i<cnt;i++){
-    const t=pickRandom(rarityPool);
-    items.push({...t,purchased:false});
-  }
-  // 3%概率出现灵根/根骨
-  if(Math.random()<.03){
-    const u=pickRandom(ultraRare);
-    items.push({...u,purchased:false});
-  }
+  for(let i=0;i<cnt;i++){const t=pickRandom(rarityPool);items.push({...t,purchased:false})}
+  if(Math.random()<.03){const u=pickRandom(ultraRare);items.push({...u,purchased:false})}
   return items;
 }
 function buyAuction(idx){
-  const items=player._auctionItems;
-  const it=items[idx];if(!it||it.purchased)return;
+  const it=player._auctionItems[idx];if(!it||it.purchased)return;
   if(player.gold<it.price){toast('灵石不足');return}
-  // 灵根/根骨必须二次确认
   if(it.type==='root'||it.type==='physique'){
     let html=`<div class="modal-title">确 认 拍 下</div><div class="confirm-text"><em>${it.name}</em><br><br>${it.desc}<br><br><em>使用后无法卸下，请慎重考虑！</em><br><br>价格：${it.price} 灵石</div><div class="confirm-buttons"><button class="btn-no" onclick="closeModal()">再 想 想</button><button class="btn-yes" onclick="confirmBuyAuction(${idx})">确 认 拍 下</button></div>`;
     showModal(html);return;
@@ -1020,21 +1263,16 @@ function confirmBuyAuction(idx){
   doBuyAuction(idx);
 }
 function doBuyAuction(idx){
-  const items=player._auctionItems;
-  const it=items[idx];if(!it||it.purchased)return;
+  const it=player._auctionItems[idx];if(!it||it.purchased)return;
   player.gold-=it.price;it.purchased=true;
-  if(it.type==='pill'){
-    if(it.effect==='antitox'){
-      player.bag.push({id:genId(),type:'antitox',name:it.name,desc:`使用后 -${it.value} 丹毒。`,toxReduce:it.value,sellPrice:Math.floor(it.price*.5)});
-    }
+  if(it.type==='pill'&&it.effect==='antitox'){
+    player.bag.push({id:genId(),type:'antitox',name:it.name,desc:`使用后 -${it.value} 丹毒。`,toxReduce:it.value,sellPrice:Math.floor(it.price*.5)});
   }else if(it.type==='material'){
     player.bag.push({id:genId(),type:'herb',name:it.name,desc:'炼丹稀有材料。',sellPrice:Math.floor(it.price*.3)});
   }else if(it.type==='weapon'){
     player.bag.push({id:genId(),type:'weapon',name:it.name,desc:it.desc,atk:80,crit:10,sellPrice:Math.floor(it.price*.5)});
   }else if(it.type==='pet'){
-    const keys=Object.keys(PET_SPECIES);
-    const k=pickRandom(keys);
-    const quality=pickRandom(['mid','high','supreme','supreme']);
+    const keys=Object.keys(PET_SPECIES);const k=pickRandom(keys);const quality=pickRandom(['mid','high','supreme','supreme']);
     const pet=genPetFromSpecies(k,null,quality);
     player.petEggs.push({id:genId(),type:'petEgg',petType:k,name:`${pet.name}蛋`,desc:`可孵化出${pet.name}。品质：${PET_QUALITY_INFO[quality].name}`,icon:pet.icon,quality,gender:pet.gender,remainingHours:PET_SPECIES[k].hatchTime,readyToHatch:false,sellPrice:Math.floor(it.price*.5)});
   }else if(it.type==='skillbook'){
@@ -1050,12 +1288,14 @@ function doBuyAuction(idx){
     if(it.name.includes('道体'))phys='daoBody';
     player.bag.push({id:genId(),type:'physiqueItem',name:it.name,desc:it.desc,physType:phys,sellPrice:Math.floor(it.price*.5)});
   }
-  log(`【黑市】你以 ${it.price} 灵石拍下了「${it.name}」。`,'loot');
+  log(`【黑市】以 ${it.price} 灵石拍下「${it.name}」。`,'loot');
   toast(`拍下 ${it.name}`);
   refreshUI();openBlackMarket();
 }
 
-/* ========== 秘境 ========== */
+/* ============================================================
+   三十二、秘境
+   ============================================================ */
 function openSecretRealms(){
   let html=`<div class="modal-title">秘 境 选 择</div><div class="sub-menu"><button class="sub-option" onclick="openSecretTier('low')"><span class="icon">🌲</span>低 阶 秘 境</button><button class="sub-option" onclick="openSecretTier('mid')"><span class="icon">🏔</span>中 阶 秘 境</button><button class="sub-option" onclick="openSecretTier('high')"><span class="icon">⛰</span>上 阶 秘 境</button><button class="sub-option" onclick="openSecretTier('top')"><span class="icon">🌌</span>顶 阶 秘 境</button></div><button class="modal-close" onclick="openTravel()">返 回</button>`;
   showModal(html);
@@ -1071,20 +1311,36 @@ function openSecretTier(tier){
   showModal(html);
 }
 
-/* ========== 战斗 ========== */
-const combatState={enemy:null,active:false,waitingForPlayer:false,playerBar:0,enemyBar:0,defending:false,interval:null,returnTo:null};
-function enterSecretRealm(tier,id){
+/* ============================================================
+   三十三、战斗系统（含剧情钩子）
+   options:
+     canFlee:false            禁止逃跑
+     mustWin:true             必定胜利（伤害锁定）
+     unbeatable:true          必败
+     noReward:true            胜利不给奖励
+     scriptedDialogue:{hpThreshold:0.5, trigger:fn}  半血触发
+     onVictory:fn             胜利回调
+     onDefeat:fn              失败回调
+     returnAfterVictory:true  胜利后不返回原界面（由回调处理）
+     dropOverride:{name,rate} 强制掉落
+   ============================================================ */
+const combatState={enemy:null,active:false,waitingForPlayer:false,playerBar:0,enemyBar:0,defending:false,interval:null,returnTo:null,options:{},scriptedFired:false};
+function enterSecretRealm(tier,id,options){
   const realm=REALMS_LIST[tier].find(r=>r.id===id);
   if(!realm||!realm.unlocked||realm.monsters.length===0){toast('秘境未开放');return}
+  options=options||{};
   combatState.returnTo={type:'secret',tier};
+  combatState.options=options;
+  combatState.scriptedFired=false;
   const tpl=pickRandom(realm.monsters);
   const enemy={...tpl,maxHp:tpl.hp,hp:tpl.hp,dropRate:realm.dropRate};
   const pet=player.pet;
   let petHpBar='';
   if(pet){
+    if(pet.hp<=0)pet.hp=Math.max(1,Math.floor(pet.maxHp*0.3));
     petHpBar=`<div class="combat-bar-row"><span class="bar-lbl">灵兽</span><div class="combat-bar"><div class="combat-bar-fill pet-hp-fill" id="petHpFill" style="width:${pet.hp/pet.maxHp*100}%"></div></div><span class="bar-txt" id="petHpText">${pet.hp}/${pet.maxHp}</span></div>`;
   }
-  let html=`<div class="modal-title">${realm.name}</div><div class="combat-arena"><div class="combat-side enemy-side"><div class="side-name enemy-name">${enemy.name}</div><div class="combat-bar-row"><span class="bar-lbl">气血</span><div class="combat-bar"><div class="combat-bar-fill hp-fill enemy-hp" id="enemyHpFill"></div></div><span class="bar-txt" id="enemyHpText">${enemy.hp}/${enemy.maxHp}</span></div><div class="combat-bar-row"><span class="bar-lbl">蓄力</span><div class="combat-bar"><div class="combat-bar-fill charge-fill" id="enemyChargeFill"></div></div><span class="bar-txt" id="enemyChargeText">0%</span></div><div class="combat-stats">攻 ${enemy.atk} · 防 ${enemy.def} · 敏 ${enemy.agility} · 闪 ${enemy.dodge}%</div></div><div class="vs-divider">— 战 —</div><div class="combat-side player-side"><div class="side-name player-name">${getPlayerTitle()}</div><div class="combat-bar-row"><span class="bar-lbl">气血</span><div class="combat-bar"><div class="combat-bar-fill hp-fill player-hp" id="playerHpFill"></div></div><span class="bar-txt" id="playerHpText">${player.hp}/${player.maxHp}</span></div><div class="combat-bar-row"><span class="bar-lbl">灵力</span><div class="combat-bar"><div class="combat-bar-fill mp-fill" id="playerMpFill"></div></div><span class="bar-txt" id="playerMpText">${player.mp}/${player.maxMp}</span></div>${petHpBar}<div class="combat-bar-row"><span class="bar-lbl">蓄力</span><div class="combat-bar"><div class="combat-bar-fill charge-fill" id="playerChargeFill"></div></div><span class="bar-txt" id="playerChargeText">0%</span></div><div class="combat-stats">攻 ${player.atk} · 防 ${player.def} · 敏 ${player.agility} · 闪 ${player.dodge}%</div></div></div><div class="combat-log-text" id="combatLogText"></div><div class="combat-actions" id="combatMainActions"><button class="combat-btn btn-atk" id="btnAtk" onclick="combatPlayerAttack()" disabled>攻 击</button><button class="combat-btn btn-skl" id="btnSkl" onclick="combatShowSkills()" disabled>技 能</button><button class="combat-btn btn-def" id="btnDef" onclick="combatPlayerDefend()" disabled>防 御</button><button class="combat-btn btn-itm" id="btnItm" onclick="combatShowItems()" disabled>用 药</button><button class="combat-btn btn-fle" id="btnFle" onclick="combatPlayerFlee()" disabled>逃 跑</button></div><div class="combat-item-picker" id="combatItemPicker" style="display:none;"><div class="item-picker-title" id="combatPickerTitle">选 择</div><div id="combatItemList"></div><button class="modal-close" onclick="combatHidePicker()">取 消</button></div>`;
+  let html=`<div class="modal-title">${realm.name}</div><div class="combat-arena"><div class="combat-side enemy-side"><div class="side-name enemy-name">${enemy.name}</div><div class="combat-bar-row"><span class="bar-lbl">气血</span><div class="combat-bar"><div class="combat-bar-fill hp-fill enemy-hp" id="enemyHpFill"></div></div><span class="bar-txt" id="enemyHpText">${enemy.hp}/${enemy.maxHp}</span></div><div class="combat-bar-row"><span class="bar-lbl">蓄力</span><div class="combat-bar"><div class="combat-bar-fill charge-fill" id="enemyChargeFill"></div></div><span class="bar-txt" id="enemyChargeText">0%</span></div><div class="combat-stats">攻 ${enemy.atk} · 防 ${enemy.def} · 敏 ${enemy.agility} · 闪 ${enemy.dodge}%</div></div><div class="vs-divider">— 战 —</div><div class="combat-side player-side"><div class="side-name player-name">${getPlayerTitle()}</div><div class="combat-bar-row"><span class="bar-lbl">气血</span><div class="combat-bar"><div class="combat-bar-fill hp-fill player-hp" id="playerHpFill"></div></div><span class="bar-txt" id="playerHpText">${player.hp}/${player.maxHp}</span></div><div class="combat-bar-row"><span class="bar-lbl">灵力</span><div class="combat-bar"><div class="combat-bar-fill mp-fill" id="playerMpFill"></div></div><span class="bar-txt" id="playerMpText">${player.mp}/${player.maxMp}</span></div>${petHpBar}<div class="combat-bar-row"><span class="bar-lbl">蓄力</span><div class="combat-bar"><div class="combat-bar-fill charge-fill" id="playerChargeFill"></div></div><span class="bar-txt" id="playerChargeText">0%</span></div><div class="combat-stats">攻 ${player.atk} · 防 ${player.def} · 敏 ${player.agility} · 闪 ${player.dodge}%</div></div></div><div class="combat-log-text" id="combatLogText"></div><div class="combat-actions" id="combatMainActions"><button class="combat-btn btn-atk" id="btnAtk" onclick="combatPlayerAttack()" disabled>攻 击</button><button class="combat-btn btn-skl" id="btnSkl" onclick="combatShowSkills()" disabled>技 能</button><button class="combat-btn btn-def" id="btnDef" onclick="combatPlayerDefend()" disabled>防 御</button><button class="combat-btn btn-itm" id="btnItm" onclick="combatShowItems()" disabled>用 药</button><button class="combat-btn btn-fle" id="btnFle" onclick="combatPlayerFlee()" disabled${options.canFlee===false?' style="opacity:.4"':''}>${options.canFlee===false?'禁 逃':'逃 跑'}</button></div><div class="combat-item-picker" id="combatItemPicker" style="display:none;"><div class="item-picker-title" id="combatPickerTitle">选 择</div><div id="combatItemList"></div><button class="modal-close" onclick="combatHidePicker()">取 消</button></div>`;
   showModal(html);
   combatState.enemy=enemy;combatState.active=true;combatState.waitingForPlayer=false;combatState.playerBar=0;combatState.enemyBar=0;combatState.defending=false;
   updateCombatBars();
@@ -1116,9 +1372,9 @@ function updateCombatBars(){
   if(pChFill)pChFill.style.width=combatState.playerBar+'%';
   if(pChText)pChText.textContent=Math.floor(combatState.playerBar)+'%';
   if(player.pet){
-    const petFill=document.getElementById('petHpFill'),petText=document.getElementById('petHpText');
-    if(petFill)petFill.style.width=Math.max(0,player.pet.hp/player.pet.maxHp*100)+'%';
-    if(petText)petText.textContent=`${Math.max(0,player.pet.hp)}/${player.pet.maxHp}`;
+    const pf=document.getElementById('petHpFill'),pt=document.getElementById('petHpText');
+    if(pf)pf.style.width=Math.max(0,player.pet.hp/player.pet.maxHp*100)+'%';
+    if(pt)pt.textContent=`${Math.max(0,player.pet.hp)}/${player.pet.maxHp}`;
   }
 }
 function appendCombatLog(text){const el=document.getElementById('combatLogText');if(!el)return;const line=document.createElement('div');line.className='combat-log-line';line.textContent=text;el.appendChild(line);while(el.children.length>40)el.removeChild(el.firstChild);el.scrollTop=el.scrollHeight}
@@ -1129,18 +1385,20 @@ function combatPlayerAttack(){
   setCombatButtonsEnabled(false);
   const pFill=document.getElementById('playerChargeFill');if(pFill)pFill.classList.remove('ready');
   const e=combatState.enemy;
-  // 灵宠先手攻击
   if(player.pet&&player.pet.hp>0)petAttack(e);
   const desc=pickRandom(PLAYER_ATTACK_DESC);
-  if(Math.random()*100<e.dodge){appendCombatLog(`${desc}${pickRandom(ENEMY_DODGE_DESC).replace('{n}',e.name)}`);updateCombatBars();if(e.hp<=0)handleCombatWin();return}
+  if(Math.random()*100<e.dodge){appendCombatLog(`${desc}${pickRandom(ENEMY_DODGE_DESC).replace('{n}',e.name)}`);updateCombatBars();checkScriptedDialogue();if(e.hp<=0)handleCombatWin();return}
   const isCrit=Math.random()*100<player.crit;
   let dmg=Math.max(1,player.atk-e.def+Math.floor(Math.random()*6));
   if(player.physique==='swordBone')dmg=Math.floor(dmg*1.3);
   if(isCrit)dmg=Math.floor(dmg*player.critDmg/100);
-  e.hp=Math.max(0,e.hp-dmg);
+  /* mustWin 时强制造成至少一半血量的伤害 */
+  if(combatState.options.mustWin&&e.hp>dmg)e.hp-=Math.min(dmg,Math.max(dmg,Math.floor(e.maxHp*0.15)));
+  else e.hp=Math.max(0,e.hp-dmg);
   if(isCrit)appendCombatLog(`${desc}${pickRandom(PLAYER_CRIT_DESC)}对 ${e.name} 造成 ${dmg} 点暴击伤害！`);
   else appendCombatLog(`${desc}对 ${e.name} 造成 ${dmg} 点伤害。`);
   updateCombatBars();
+  checkScriptedDialogue();
   if(e.hp<=0)handleCombatWin();
 }
 function petAttack(e){
@@ -1156,15 +1414,32 @@ function petAttack(e){
   updateCombatBars();
   if(e.hp<=0)handleCombatWin();
 }
+function checkScriptedDialogue(){
+  const opt=combatState.options;
+  if(!opt.scriptedDialogue||combatState.scriptedFired)return;
+  const e=combatState.enemy;
+  if(e.hp/e.maxHp<=opt.scriptedDialogue.hpThreshold){
+    combatState.scriptedFired=true;
+    if(typeof opt.scriptedDialogue.trigger==='function'){
+      /* 暂停战斗 */
+      combatState.active=false;clearInterval(combatState.interval);
+      setCombatButtonsEnabled(false);
+      setTimeout(()=>{
+        opt.scriptedDialogue.trigger();
+        /* 剧情结束后若需要恢复战斗，由回调处理 */
+      },400);
+    }
+  }
+}
 function combatPlayerDefend(){
   if(!combatState.waitingForPlayer)return;
   combatState.waitingForPlayer=false;combatState.playerBar=0;
   combatState.defending=true;setCombatButtonsEnabled(false);
   const pFill=document.getElementById('playerChargeFill');if(pFill)pFill.classList.remove('ready');
-  // 灵宠仍会攻击
   if(player.pet&&player.pet.hp>0)petAttack(combatState.enemy);
   appendCombatLog('你凝神静气，摆出守势。');
   updateCombatBars();
+  checkScriptedDialogue();
   if(combatState.enemy.hp<=0){handleCombatWin();return}
 }
 function combatShowItems(){
@@ -1184,7 +1459,7 @@ function combatShowItems(){
       if(eff.bonus)parts.push(`突破+${eff.bonus}%`);
       if(g.item.toxReduce)parts.push(`解丹毒-${g.item.toxReduce}`);
       if(g.item.tox)parts.push(`丹毒+${g.item.tox}`);
-      html+=`<div class="item-entry"><div><div class="item-name">${name} <span style="color:#a67c00;font-size:12px;">×${g.count}</span></div><div class="item-desc">${parts.join(' · ')}</div></div><div class="item-actions"><button onclick="combatUseItemByName('${name}')">使用</button></div></div>`;
+      html+=`<div class="item-entry"><div><div class="item-name">${name} ×${g.count}</div><div class="item-desc">${parts.join(' · ')}</div></div><div class="item-actions"><button onclick="combatUseItemByName('${name}')">使用</button></div></div>`;
     }
   }
   document.getElementById('combatPickerTitle').textContent='选 择 物 品';
@@ -1216,7 +1491,6 @@ function combatUseSkill(skillId){
   const e=combatState.enemy;
   const mul=(sk.baseMul||1.8)+(sk.level-1)*(sk.perLevelMul||.2)+(sk.tier-1)*(sk.perTierMul||.4);
   const desc=pickRandom(SKILL_CAST_DESC);
-  // 灵宠先攻
   if(player.pet&&player.pet.hp>0)petAttack(e);
   if(e.hp<=0){combatHidePicker();handleCombatWin();return}
   if(Math.random()*100<e.dodge){appendCombatLog(`${desc}${pickRandom(ENEMY_DODGE_DESC).replace('{n}',e.name)}`);combatHidePicker();finishPlayerTurn();return}
@@ -1224,10 +1498,12 @@ function combatUseSkill(skillId){
   if(player.physique==='swordBone')dmg=Math.floor(dmg*1.3);
   const isCrit=Math.random()*100<player.crit;
   if(isCrit)dmg=Math.floor(dmg*player.critDmg/100);
-  e.hp=Math.max(0,e.hp-dmg);
+  if(combatState.options.mustWin&&e.hp>dmg)e.hp-=Math.min(dmg,Math.max(dmg,Math.floor(e.maxHp*0.15)));
+  else e.hp=Math.max(0,e.hp-dmg);
   if(isCrit)appendCombatLog(`${desc}${pickRandom(PLAYER_CRIT_DESC)}对 ${e.name} 造成 ${dmg} 点暴击伤害！`);
   else appendCombatLog(`${desc}对 ${e.name} 造成 ${dmg} 点伤害。`);
   combatHidePicker();updateCombatBars();refreshUI();
+  checkScriptedDialogue();
   if(e.hp<=0){handleCombatWin();return}
   finishPlayerTurn();
 }
@@ -1249,6 +1525,7 @@ function combatUseItem(idx){
 function finishPlayerTurn(){combatState.waitingForPlayer=false;combatState.playerBar=0;setCombatButtonsEnabled(false);const pFill=document.getElementById('playerChargeFill');if(pFill)pFill.classList.remove('ready')}
 function combatPlayerFlee(){
   if(!combatState.waitingForPlayer)return;
+  if(combatState.options.canFlee===false){toast('此战无法逃走！');return}
   const e=combatState.enemy;
   const pP=calcPower(player),eP=calcPower(e),ratio=pP/eP;
   const chance=Math.max(5,Math.min(95,50*ratio));
@@ -1256,7 +1533,7 @@ function combatPlayerFlee(){
   if(Math.random()*100<chance){
     appendCombatLog('你转身便走，成功脱离战斗！');
     combatState.active=false;clearInterval(combatState.interval);setCombatButtonsEnabled(false);
-    log('【历练】你成功脱离战斗。','info');advanceTime();refreshUI();
+    log('【历练】成功脱离战斗。','info');advanceTime();refreshUI();
     const ret=combatState.returnTo;
     setTimeout(()=>{if(ret&&ret.type==='secret')openSecretTier(ret.tier);else closeModal()},800);
   }else{
@@ -1268,7 +1545,6 @@ function combatPlayerFlee(){
 }
 function doEnemyTurn(){
   const e=combatState.enemy;if(!e||e.hp<=0)return;
-  // 30%概率攻击灵宠
   const targetPet=player.pet&&player.pet.hp>0&&Math.random()<.3;
   const desc=pickRandom(ENEMY_ATTACK_DESC).replace('{n}',e.name);
   if(targetPet){
@@ -1283,55 +1559,71 @@ function doEnemyTurn(){
   let dmg=Math.max(1,e.atk-player.def+Math.floor(Math.random()*5));
   if(combatState.defending){dmg=Math.floor(dmg*.4);combatState.defending=false;appendCombatLog(`${desc}你稳守如山，仅受 ${dmg} 点伤害。`)}
   else appendCombatLog(`${desc}你受 ${dmg} 点伤害。`);
-  player.hp=Math.max(0,player.hp-dmg);
+  /* unbeatable 时玩家血量不会归零 */
+  if(combatState.options.unbeatable){player.hp=Math.max(1,player.hp-dmg)}
+  else player.hp=Math.max(0,player.hp-dmg);
   updateCombatBars();refreshUI();
   if(player.hp<=0)handleCombatLose();
 }
 function handleCombatWin(){
   const e=combatState.enemy;
   appendCombatLog(`✦ ${e.name} 被击败了！`);
-  const reward={exp:e.exp,gold:e.gold,items:[]};
-  player.exp+=e.exp;player.gold+=e.gold;
-  log(`【历练】击败 ${e.name}，修为 +${e.exp}，灵石 +${e.gold}。`,'good');
-  // 灵宠也获得修为
-  if(player.pet&&player.pet.hp>0){
-    const petExp=Math.floor(e.exp*0.7);
-    player.pet.yaoExp=(player.pet.yaoExp||0)+petExp;
-    appendCombatLog(`灵兽「${player.pet.name}」获得修为 +${petExp}。`);
-    // 灵宠妖修境界提升：每100经验升1级
-    while(player.pet.yaoExp>=100&&player.pet.yaoRealm<10){
-      player.pet.yaoExp-=100;player.pet.yaoRealm++;
-      appendCombatLog(`灵兽「${player.pet.name}」妖修提升至【${YAO_REALMS[player.pet.yaoRealm].name}】！`);
-    }
-  }
-  if(e.drop&&Math.random()<(e.dropRate||e.drop.rate)){
-    const base=ITEM_DB[e.drop.name];
-    if(base){const item={...base,id:genId()};player.bag.push(item);reward.items.push(e.drop.name);log(`  获得物品：${e.drop.name}`,'loot')}
-  }
-  // 秘境采集灵草（中上阶有极小概率）
-  const ret=combatState.returnTo;
-  if(ret&&ret.type==='secret'&&(ret.tier==='mid'||ret.tier==='high'||ret.tier==='top')){
-    if(Math.random()<.02){ // 2%概率
-      const rare=['净毒药水','改髓丹材料·混元草'];
-      const got=pickRandom(rare);
-      if(got==='净毒药水'){player.bag.push({id:genId(),type:'antitox',name:'净毒药水',desc:'使用后 -10 丹毒。',toxReduce:10,sellPrice:1500})}
-      else{player.bag.push({id:genId(),type:'herb',name:got,desc:'炼丹稀有材料。',sellPrice:1500})}
-      log(`【秘境】你在秘境深处采集到「${got}」！`,'loot');
-      appendCombatLog(`秘境深处，你意外采得「${got}」！`);
-    }
-  }
+  const opt=combatState.options;
   combatState.active=false;clearInterval(combatState.interval);setCombatButtonsEnabled(false);
-  refreshUI();advanceTime();
-  setTimeout(()=>{showCombatReward(reward)},1200);
+  if(opt.mustWin||!opt.noReward){
+    const reward={exp:e.exp,gold:e.gold,items:[]};
+    player.exp+=e.exp;player.gold+=e.gold;
+    log(`【历练】击败 ${e.name}，修为 +${e.exp}，灵石 +${e.gold}。`,'good');
+    if(player.pet&&player.pet.hp>0){
+      const petExp=Math.floor(e.exp*0.7);
+      player.pet.yaoExp=(player.pet.yaoExp||0)+petExp;
+      appendCombatLog(`灵兽「${player.pet.name}」获得修为 +${petExp}。`);
+      while(player.pet.yaoExp>=100&&player.pet.yaoRealm<10){player.pet.yaoExp-=100;player.pet.yaoRealm++;appendCombatLog(`灵兽「${player.pet.name}」妖修提升至【${YAO_REALMS[player.pet.yaoRealm].name}】！`)}
+    }
+    const dropData=opt.dropOverride||e.drop;
+    const dropRate=opt.dropOverride?.rate??(e.dropRate||e.drop?.rate||0);
+    if(dropData&&Math.random()<dropRate){
+      const base=ITEM_DB[dropData.name]||(HERB_DB[dropData.name]?{type:'herb',name:dropData.name,desc:'炼丹灵草。'}:null);
+      if(base){
+        const item={...base,id:genId()};
+        if(base.type==='herb'){item.sellPrice=Math.floor(HERB_DB[dropData.name]*.3);item.price=HERB_DB[dropData.name]}
+        player.bag.push(item);reward.items.push(dropData.name);log(`  获得物品：${dropData.name}`,'loot');
+      }
+    }
+    const ret=combatState.returnTo;
+    if(ret&&ret.type==='secret'&&(ret.tier==='mid'||ret.tier==='high'||ret.tier==='top')){
+      if(Math.random()<.02){
+        const rare=['净毒药水','改髓丹材料·混元草'];
+        const got=pickRandom(rare);
+        if(got==='净毒药水'){player.bag.push({id:genId(),type:'antitox',name:'净毒药水',desc:'使用后 -10 丹毒。',toxReduce:10,sellPrice:1500})}
+        else{player.bag.push({id:genId(),type:'herb',name:got,desc:'炼丹稀有材料。',sellPrice:1500})}
+        log(`【秘境】采集到「${got}」！`,'loot');
+        appendCombatLog(`秘境深处，你意外采得「${got}」！`);
+      }
+    }
+    refreshUI();advanceTime();
+    setTimeout(()=>{showCombatReward(reward)},1000);
+  }else{
+    refreshUI();advanceTime();
+    if(opt.onVictory)setTimeout(()=>opt.onVictory(),600);
+    else setTimeout(()=>closeModal(),600);
+  }
 }
 function handleCombatLose(){
-  appendCombatLog('✧ 你伤重倒地，勉强逃离……');
-  player.hp=1;
+  appendCombatLog('✧ 你伤重倒地……');
+  const opt=combatState.options;
+  if(opt.unbeatable){player.hp=1}
+  else player.hp=1;
   combatState.active=false;clearInterval(combatState.interval);setCombatButtonsEnabled(false);
-  log('【历练】你不敌对手，重伤逃离。','bad');
+  log('【历练】你不敌对手，重伤。','bad');
   refreshUI();advanceTime();
+  if(opt.onDefeat){setTimeout(()=>opt.onDefeat(),800);return}
+  if(opt.mustWin){
+    const reward={exp:0,gold:0,items:[],defeat:true,enemyName:combatState.enemy?combatState.enemy.name:'对手'};
+    setTimeout(()=>{showCombatReward(reward)},800);return;
+  }
   const reward={exp:0,gold:0,items:[],defeat:true,enemyName:combatState.enemy?combatState.enemy.name:'对手'};
-  setTimeout(()=>{showCombatReward(reward)},1300);
+  setTimeout(()=>{showCombatReward(reward)},900);
 }
 function showCombatReward(r){
   let html=`<div class="modal-title">${r.defeat?'败 走 之 局':'战 利 品'}</div><div class="reward-list">`;
@@ -1344,9 +1636,11 @@ function showCombatReward(r){
   showModal(html);
 }
 
-/* ========== 游历 ========== */
+/* ============================================================
+   三十四、游历
+   ============================================================ */
 function openRoam(){
-  let html=`<div class="modal-title">游 历 江 湖</div><div style="text-align:center;font-size:13px;color:#8b7355;margin-bottom:14px;line-height:1.9;">游历需耗费 <b style="color:#c0392b;">三个时辰</b>，途中机缘难料……</div><div class="confirm-buttons"><button class="btn-no" onclick="openTravel()">再 想 想</button><button class="btn-yes" onclick="doRoam()">出 发</button></div>`;
+  let html=`<div class="modal-title">游 历 江 湖</div><div style="text-align:center;font-size:13px;color:#8b7355;margin-bottom:14px;line-height:1.9;">游历需耗费 <b style="color:#c0392b;">三个时辰</b>。</div><div class="confirm-buttons"><button class="btn-no" onclick="openTravel()">再 想 想</button><button class="btn-yes" onclick="doRoam()">出 发</button></div>`;
   showModal(html);
 }
 function generateRandomNpc(){
@@ -1379,7 +1673,6 @@ function generateRandomNpc(){
   if(isBuddhistSect||isYao){favDish=pickRandom(VEGETARIAN_DISHES);favItem=pickRandom(BUDDHIST_GIFTS)}
   else{favDish=pickRandom(RECIPE_DB).name;favItem=pickRandom(GIFT_DB).name}
   const base=(rIdx+1)*18;
-  // NPC灵根
   const npcRoot=rollSpiritRoot(rIdx);
   const npcPhysique=rollPhysique(rIdx);
   const rootMult=SPIRIT_ROOTS[npcRoot.type].mult;
@@ -1389,13 +1682,12 @@ function generateRandomNpc(){
   const agility=10+Math.floor(Math.random()*10);
   const dodge=5+Math.floor(Math.random()*12);
   const crit=5+Math.floor(Math.random()*8);
-  // 高武力NPC颜值天赋高
   let appearance,talent;
   if(rIdx>=20){appearance=85+Math.floor(Math.random()*15);talent=85+Math.floor(Math.random()*15)}
   else if(rIdx>=10){appearance=70+Math.floor(Math.random()*25);talent=70+Math.floor(Math.random()*25)}
   else{appearance=50+Math.floor(Math.random()*40);talent=50+Math.floor(Math.random()*40)}
   let weapon;
-  if(isBuddhistSect){weapon=pickRandom([{name:'禅杖',atk:15,desc:'佛门法器。'},{name:'念珠',atk:10,def:3,desc:'一百零八颗。'},{name:'降魔杵',atk:20,def:5,desc:'佛门降魔之物。'}])}
+  if(isBuddhistSect){weapon=pickRandom([{name:'禅杖',atk:15,desc:'佛门法器。'},{name:'念珠',atk:10,def:3,desc:'一百零八颗。'},{name:'降魔杵',atk:20,def:5,desc:'降魔之物。'}])}
   else{const wp=[{name:'铁剑',atk:8,desc:'普普通通。'},{name:'青锋剑',atk:15,desc:'随身佩剑。'},{name:'月华剑',atk:20,desc:'月华凝练。'},{name:'寒霜剑',atk:28,desc:'剑身泛寒。'},{name:'流光剑',atk:35,desc:'流光溢彩。'}];weapon=rIdx>=20?pickRandom(wp.slice(-2)):pickRandom(wp.slice(0,3))}
   return{id:genId(),name,dao,gender,sect:sectName,position,desc:`${sectName}的${position}。`,favDish,favItem,favor:10,isYao,isBuddhist:isBuddhistSect,realmIndex:rIdx,atk,def,maxHp,agility,dodge,crit,critDmg:150,weapon,acc1:Math.random()<.5?{name:'狼牙护符',desc:'野狼獠牙。',atk:3,hp:10}:null,acc2:Math.random()<.4?{name:'灵猴玉佩',desc:'轻盈灵动。',mp:10,dodge:3}:null,pet:Math.random()<.3?{name:PET_SPECIES[pickRandom(Object.keys(PET_SPECIES))].name,desc:'贴身灵宠。'}:null,spiritRoot:npcRoot,physique:npcPhysique,appearance,talent}
 }
@@ -1409,15 +1701,14 @@ function doRoam(){
       const st=pickRandom(stats);player[st.k]+=st.v;
       if(st.k==='maxHp')player.hp=Math.min(player.maxHp,player.hp+st.v);
       if(st.k==='maxMp')player.mp=Math.min(player.maxMp,player.mp+st.v);
-      log(`【游历】你登高望远，${st.n} +${st.v}。`,'good');
+      log(`【游历】登高望远，${st.n} +${st.v}。`,'good');
     }else if(sub<.75){
       const herbs=HERB_LIST.filter(h=>HERB_DB[h]<=30);
       const name=pickRandom(herbs);
       player.bag.push({id:genId(),type:'herb',name,desc:'炼丹灵草。',sellPrice:Math.floor(HERB_DB[name]*.3),price:HERB_DB[name]});
       log(`【游历】采到「${name}」。`,'good');
     }else{
-      const dish=pickRandom(RECIPE_DB);
-      player.bag.push(dishToItem(dish));
+      const dish=pickRandom(RECIPE_DB);player.bag.push(dishToItem(dish));
       log(`【游历】尝到「${dish.name}」。`,'good');
     }
     toast('游历平安');
@@ -1445,9 +1736,11 @@ function showNpcEncounter(npc){
   let html=`<div class="modal-title">相 遇</div><div class="card"><div class="card-title"><span>${npc.name}</span><span style="font-size:12px;color:#a67c00;">${npc.dao}</span></div><div class="card-desc">${npc.desc}${npc.isYao?' · <b style="color:#6b4a80;">妖修</b>':''}${npc.isBuddhist?' · <b style="color:#a67c00;">佛修</b>':''} · ${getRealmName(npc.realmIndex)}</div><div style="font-size:12px;color:#8b7355;text-align:center;padding:6px;">灵根：<span style="color:${rDisplay.color};">${rootStr}</span> · 体质：<span style="color:${pDisplay.color};">${pDisplay.name}</span><br>颜值 ${npc.appearance} · 天赋 ${npc.talent}</div><div style="font-size:11px;color:#8b7355;text-align:center;padding:8px;background:rgba(168,135,92,.06);">是否将此人录入因缘录？</div><div class="card-actions" style="justify-content:center;margin-top:12px;"><button onclick='acceptNpc(${JSON.stringify(npc).replace(/'/g,"&#39;")})'>结 交</button><button class="ghost" onclick="closeModal()">婉 拒</button></div></div>`;
   showModal(html);
 }
-function acceptNpc(npc){player.relations.push(npc);log(`【因缘录】你与 ${npc.name}（${npc.dao}）结交。`,'good');toast(`结交 ${npc.name}`);closeModal();refreshUI()}
+function acceptNpc(npc){player.relations.push(npc);log(`【因缘录】结交 ${npc.name}（${npc.dao}）。`,'good');toast(`结交 ${npc.name}`);closeModal();refreshUI()}
 
-/* ========== 酒楼 ========== */
+/* ============================================================
+   三十五、酒楼
+   ============================================================ */
 let restaurantTab='buy';
 function openRestaurant(){
   let html=`<div class="modal-title">酒 楼</div><div style="text-align:center;margin-bottom:10px;">${goldBadge()}</div><div class="shop-tabs"><button class="shop-tab ${restaurantTab==='buy'?'active':''}" onclick="restaurantTab='buy';openRestaurant()">购买食材</button><button class="shop-tab ${restaurantTab==='eat'?'active':''}" onclick="restaurantTab='eat';openRestaurant()">品尝菜肴</button></div>`;
@@ -1461,7 +1754,7 @@ function openRestaurant(){
     html+=`<div class="card-list">`;
     RECIPE_DB.forEach((r,i)=>{
       const price=Math.max(3,Math.floor(r.dishPrice*.8));
-      html+=`<div class="card"><div class="card-title"><span>${r.name}</span><span style="font-size:12px;color:#a67c00;">${price} 灵石</span></div><div class="card-desc">${r.desc} · ${r.effect==='hp'?'回血':'回灵'} +${r.value}</div><div class="card-actions"><button ${player.gold>=price?'':'disabled'} onclick="chooseDishMode(${i},${price})">品 尝 / 打 包</button></div></div>`;
+      html+=`<div class="card"><div class="card-title"><span>${r.name}</span><span style="font-size:12px;color:#a67c00;">${price} 灵石</span></div><div class="card-desc">${r.desc}</div><div class="card-actions"><button ${player.gold>=price?'':'disabled'} onclick="chooseDishMode(${i},${price})">品 尝 / 打 包</button></div></div>`;
     });
     html+=`</div>`;
   }
@@ -1502,7 +1795,9 @@ function pickDishQuantity(i,price,mode){
   });
 }
 
-/* ========== 商店 ========== */
+/* ============================================================
+   三十六、商店
+   ============================================================ */
 let currentShopTab='weapon';
 function openShop(){renderShop()}
 function renderShop(){
@@ -1510,8 +1805,6 @@ function renderShop(){
   let html=`<div class="modal-title">坊 市 · 商 店</div><div style="text-align:center;margin-bottom:12px;">${goldBadge()}</div><div class="shop-tabs">`;
   tabs.forEach(t=>{html+=`<button class="shop-tab ${currentShopTab===t.key?'active':''}" onclick="switchShopTab('${t.key}')">${t.label}</button>`});
   html+=`</div>`;
-
-  // 心经/剑法
   if(currentShopTab==='xinjing'||currentShopTab==='jianfa'){
     const stock=currentShopTab==='xinjing'?player.shopXinfaStock:player.shopJianfaStock;
     if(stock.length===0){html+=`<div style="text-align:center;padding:40px 20px;color:#8b7355;font-size:14px;">此间功法已售罄。</div><button class="modal-close" onclick="openTravel()">返 回</button>`;showModal(html);return}
@@ -1531,14 +1824,12 @@ function renderShop(){
     html+=`</div><button class="modal-close" onclick="openTravel()">返 回</button>`;
     showModal(html);return;
   }
-
-  // 丹药：快捷栏
   if(currentShopTab==='pill'){
     html+=`<div class="shop-tabs" style="margin-bottom:10px;">
-      <button class="shop-tab active" onclick="scrollPillSection('common')" style="font-size:11px;">下品</button>
-      <button class="shop-tab active" onclick="scrollPillSection('mid')" style="font-size:11px;">中品</button>
-      <button class="shop-tab active" onclick="scrollPillSection('high')" style="font-size:11px;">上品</button>
-      <button class="shop-tab active" onclick="scrollPillSection('supreme')" style="font-size:11px;">顶级</button>
+      <button class="shop-tab" onclick="scrollPillSection('common')" style="font-size:11px;">下品</button>
+      <button class="shop-tab" onclick="scrollPillSection('mid')" style="font-size:11px;">中品</button>
+      <button class="shop-tab" onclick="scrollPillSection('high')" style="font-size:11px;">上品</button>
+      <button class="shop-tab" onclick="scrollPillSection('supreme')" style="font-size:11px;">顶级</button>
     </div>`;
     ['common','mid','high','supreme'].forEach(q=>{
       const pool=player.pillDB[q]||[];
@@ -1555,8 +1846,6 @@ function renderShop(){
     html+=`<button class="modal-close" onclick="openTravel()">返 回</button>`;
     showModal(html);return;
   }
-
-  // 灵草
   if(currentShopTab==='herb'){
     html+=`<div class="card-list">`;
     HERB_LIST.forEach(h=>{
@@ -1566,19 +1855,12 @@ function renderShop(){
     html+=`</div><button class="modal-close" onclick="openTravel()">返 回</button>`;
     showModal(html);return;
   }
-
   let items=[];
-  if(currentShopTab==='weapon'){
-    items=[{name:'普通铁剑',price:60,attrs:'攻击+5'},{name:'精铁长剑',price:200,attrs:'攻击+12'},{name:'青云剑',price:500,attrs:'攻击+22 · 暴击+2%'},{name:'玄铁重剑',price:1200,attrs:'攻击+38 · 防御+5'}];
-  }else if(currentShopTab==='buddhist'){
-    items=[{name:'禅杖',price:180,attrs:'攻击+15 · 佛修'},{name:'念珠',price:150,attrs:'攻击+10 · 防御+3 · 佛修'},{name:'降魔杵',price:600,attrs:'攻击+28 · 防御+5 · 佛修'},{name:'金钵',price:450,attrs:'攻击+22 · 暴击+3% · 佛修'},{name:'菩提念珠',price:1500,attrs:'攻击+35 · 防御+8 · 暴击+5% · 佛修'}];
-  }else if(currentShopTab==='acc'){
-    items=[{name:'狼牙护符',price:100,attrs:'攻击+3 · 气血+10'},{name:'灵猴玉佩',price:130,attrs:'灵力+10 · 闪避+3%'},{name:'护心铜镜',price:250,attrs:'防御+6 · 气血+25'},{name:'疾风铃',price:220,attrs:'闪避+5% · 敏捷+2'},{name:'幽魂精魄',price:380,attrs:'攻击+6 · 暴击+3%'}];
-  }else if(currentShopTab==='gift'){
-    items=GIFT_DB.map(g=>({name:g.name,price:g.price,attrs:'赠礼'}));
-  }else if(currentShopTab==='tool'){
-    items=[{name:'易名符',price:5000,attrs:'更改姓名与道号'},{name:'化形丹',price:3000,attrs:'辅助灵兽化形'},{name:'净毒药水',price:3000,attrs:'-10丹毒'}];
-  }
+  if(currentShopTab==='weapon'){items=[{name:'普通铁剑',price:60,attrs:'攻击+5'},{name:'精铁长剑',price:200,attrs:'攻击+12'},{name:'青云剑',price:500,attrs:'攻击+22 · 暴击+2%'},{name:'玄铁重剑',price:1200,attrs:'攻击+38 · 防御+5'}]}
+  else if(currentShopTab==='buddhist'){items=[{name:'禅杖',price:180,attrs:'攻击+15 · 佛修'},{name:'念珠',price:150,attrs:'攻击+10 · 防御+3 · 佛修'},{name:'降魔杵',price:600,attrs:'攻击+28 · 防御+5 · 佛修'},{name:'金钵',price:450,attrs:'攻击+22 · 暴击+3% · 佛修'},{name:'菩提念珠',price:1500,attrs:'攻击+35 · 防御+8 · 暴击+5% · 佛修'}]}
+  else if(currentShopTab==='acc'){items=[{name:'狼牙护符',price:100,attrs:'攻击+3 · 气血+10'},{name:'灵猴玉佩',price:130,attrs:'灵力+10 · 闪避+3%'},{name:'护心铜镜',price:250,attrs:'防御+6 · 气血+25'},{name:'疾风铃',price:220,attrs:'闪避+5% · 敏捷+2'},{name:'幽魂精魄',price:380,attrs:'攻击+6 · 暴击+3%'}]}
+  else if(currentShopTab==='gift'){items=GIFT_DB.map(g=>({name:g.name,price:g.price,attrs:'赠礼'}))}
+  else if(currentShopTab==='tool'){items=[{name:'易名符',price:5000,attrs:'更改姓名与道号'},{name:'化形丹',price:3000,attrs:'辅助灵兽化形'},{name:'净毒药水',price:3000,attrs:'-10丹毒'}]}
   html+=`<div class="card-list">`;
   items.forEach(it=>{
     const canAfford=player.gold>=it.price;
@@ -1589,7 +1871,8 @@ function renderShop(){
 }
 function scrollPillSection(q){
   const el=document.getElementById('pillSection_'+q);
-  if(el)el.scrollIntoView({behavior:'smooth'});
+  const sc=document.querySelector('.modal-content');
+  if(el&&sc)sc.scrollTop=el.offsetTop-60;
 }
 function switchShopTab(k){currentShopTab=k;renderShop()}
 function buyShopSkill(tab,idx){
@@ -1649,7 +1932,9 @@ function buyPill(pillId){
   },'颗');
 }
 
-/* ========== 背包 ========== */
+/* ============================================================
+   三十七、背包
+   ============================================================ */
 function getSellPrice(item){if(item.sellPrice)return item.sellPrice;if(item.price)return Math.floor(item.price*.5);let val=5;if(item.atk)val+=item.atk*3;if(item.def)val+=item.def*2;if(item.hp)val+=item.hp;if(item.mp)val+=item.mp;return Math.max(1,Math.floor(val*.5))}
 function openBag(){
   let html=`<div class="modal-title">芥 子 袋</div><div style="text-align:center;margin-bottom:10px;">${goldBadge()}</div>`;
@@ -1686,7 +1971,7 @@ function openBag(){
     else if(item.type==='rootItem'){btn=`<button onclick="useRootItem(${firstIdx})">使用</button>`}
     else if(item.type==='physiqueItem'){btn=`<button onclick="usePhysiqueItem(${firstIdx})">使用</button>`}
     const attrStr=buildAttrString(item);const sellPrice=getSellPrice(item);
-    html+=`<div class="item-entry"><div><div class="item-name">${item.name}${count>1?` <span style="color:#a67c00;font-size:12px;">×${count}</span>`:''}</div><div class="item-desc">${attrStr||item.desc||''}</div></div><div class="item-actions">${btn}<button class="sell" onclick="sellItemGroup('${item.name}','${item.type||''}')">售出(${sellPrice})</button><button onclick="dropItemGroup('${item.name}','${item.type||''}')">丢弃</button></div></div>`;
+    html+=`<div class="item-entry"><div><div class="item-name">${item.name}${count>1?` ×${count}`:''}</div><div class="item-desc">${attrStr||item.desc||''}</div></div><div class="item-actions">${btn}<button class="sell" onclick="sellItemGroup('${item.name}','${item.type||''}')">售出(${sellPrice})</button><button onclick="dropItemGroup('${item.name}','${item.type||''}')">丢弃</button></div></div>`;
   }}
   html+=`</div><button class="modal-close" onclick="closeModal()">关 闭</button>`;
   showModal(html);
@@ -1694,7 +1979,7 @@ function openBag(){
 function useAntitox(index){
   const item=player.bag[index];if(!item)return;
   player.pillToxicity=Math.max(0,player.pillToxicity-(item.toxReduce||10));
-  log(`【净毒】使用「${item.name}」，丹毒 -${item.toxReduce}（当前 ${player.pillToxicity}/100）。`,'good');
+  log(`【净毒】使用「${item.name}」，丹毒 -${item.toxReduce}（当前 ${Math.floor(player.pillToxicity)}/100）。`,'good');
   player.bag.splice(index,1);refreshUI();openBag();
 }
 function useRootItem(index){
@@ -1704,9 +1989,9 @@ function useRootItem(index){
 }
 function doUseRootItem(index){
   const item=player.bag[index];if(!item)return;
-  if(item.rootType==='chaos')player.spiritRoot={sub:'chaos',type:'chaos'};
-  else if(item.rootType==='mutated')player.spiritRoot={sub:'mutated',type:'mutated',subType:pickRandom(SPIRIT_SUBTYPE.mutated)};
-  else player.spiritRoot={sub:'heavenly',type:'heavenly',subType:pickRandom(SPIRIT_SUBTYPE.heavenly)};
+  if(item.rootType==='chaos')player.spiritRoot={type:'chaos'};
+  else if(item.rootType==='mutated')player.spiritRoot={type:'mutated',subType:pickRandom(SPIRIT_SUBTYPE.mutated)};
+  else player.spiritRoot={type:'heavenly',subType:pickRandom(SPIRIT_SUBTYPE.heavenly)};
   const d=getRootDisplay();
   log(`【灵根】使用「${item.name}」，灵根变为【${d.name}】！`,'good');
   toast(`灵根变为 ${d.name}`);
@@ -1838,7 +2123,7 @@ function useSkillBook(index){
       log(`【秘籍】习得「${skill.name}」！`,'good');
       toast(`习得 ${skill.name}`);refreshUI();openBag();return;
     }
-  }
+  } else {skill=player.skills.find(s=>s.id===item.skillId);if(!skill)return}
   const bookTier=item.bookTier||1;
   if(bookTier!==skill.tier){toast(`需要${skill.tier}阶秘籍`);return}
   const maxTier=SKILL_QUALITY[skill.quality].maxTier;
@@ -1861,7 +2146,7 @@ function hatchEggFromBag(i){
 let petNameCb=null;
 function askPetName(petType,cb){
   petNameCb=cb;const pet=PET_SPECIES[petType];
-  let html=`<div class="modal-title">灵 兽 赐 名</div><div style="text-align:center;font-size:13px;color:#8b7355;margin-bottom:14px;">${pet.icon} ${pet.name} 破壳而出<br>请为它取一个名字</div><div class="name-field"><label>道号</label><input type="text" id="petNameInput" maxlength="8" value="${pet.name}灵修"></div><div class="confirm-buttons"><button class="btn-yes" onclick="confirmPetName()">确 认</button></div>`;
+  let html=`<div class="modal-title">灵 兽 赐 名</div><div style="text-align:center;font-size:13px;color:#8b7355;margin-bottom:14px;">${pet.icon} ${pet.name} 破壳而出</div><div class="name-field"><label>道号</label><input type="text" id="petNameInput" maxlength="8" value="${pet.name}灵修"></div><div class="confirm-buttons"><button class="btn-yes" onclick="confirmPetName()">确 认</button></div>`;
   showModal(html);setTimeout(()=>{const el=document.getElementById('petNameInput');if(el)el.select()},100);
 }
 function confirmPetName(){
@@ -1871,14 +2156,8 @@ function confirmPetName(){
 }
 function applyPetFromEgg(egg,dao){
   const pet=PET_SPECIES[egg.petType];if(!pet)return;
-  const q=egg.quality||'common';
-  const qMult=PET_QUALITY_INFO[q].mult;
-  const yaoBase=pet.yaoBase;
-  const petObj={id:genId(),type:'pet',name:pet.name,icon:pet.icon,desc:pet.desc,stat:pet.stat,value:pet.value,quality:q,gender:egg.gender||'公',dao:dao||`${pet.name}灵修`,yaoRealm:0,yaoExp:0,
-    maxHp:Math.floor(yaoBase.hp*qMult),hp:Math.floor(yaoBase.hp*qMult),
-    maxMp:Math.floor(yaoBase.mp*qMult),mp:Math.floor(yaoBase.mp*qMult),
-    atk:Math.floor(yaoBase.atk*qMult),def:Math.floor(yaoBase.def*qMult),agility:yaoBase.agi,
-    favor:50,favDish:pet.favDish,favItem:pet.favItem,crit:5,critDmg:150,dodge:5};
+  const q=egg.quality||'common';const qMult=PET_QUALITY_INFO[q].mult;const yaoBase=pet.yaoBase;
+  const petObj={id:genId(),type:'pet',name:pet.name,icon:pet.icon,desc:pet.desc,stat:pet.stat,value:pet.value,quality:q,gender:egg.gender||'公',dao:dao||`${pet.name}灵修`,yaoRealm:0,yaoExp:0,maxHp:Math.floor(yaoBase.hp*qMult),hp:Math.floor(yaoBase.hp*qMult),maxMp:Math.floor(yaoBase.mp*qMult),mp:Math.floor(yaoBase.mp*qMult),atk:Math.floor(yaoBase.atk*qMult),def:Math.floor(yaoBase.def*qMult),agility:yaoBase.agi,favor:50,favDish:pet.favDish,favItem:pet.favItem,crit:5,critDmg:150,dodge:5};
   if(player.pet)player.bag.push(player.pet);
   player.pet=petObj;
   const bonusVal=Math.floor(pet.value*qMult);
@@ -1886,7 +2165,7 @@ function applyPetFromEgg(egg,dao){
   if(pet.stat==='def')player.def+=bonusVal;
   if(pet.stat==='hp')player.maxHp+=bonusVal;
   if(pet.stat==='dodge')player.dodge=Math.min(60,player.dodge+bonusVal);
-  if(pet.stat==='crit'){player.crit=Math.min(60,player.crit+bonusVal)}
+  if(pet.stat==='crit')player.crit=Math.min(60,player.crit+bonusVal);
   if(pet.stat==='cultivate')player.cultivateBonus=(player.cultivateBonus||0)+pet.value;
   if(pet.stat==='agility')player.agility=Math.min(60,player.agility+bonusVal);
   log(`【孵化】${pet.icon} ${pet.name}（${PET_QUALITY_INFO[q].name}）「${petObj.dao}」破壳而出！`,'loot');
@@ -1894,8 +2173,7 @@ function applyPetFromEgg(egg,dao){
 }
 function viewPetDetail(){
   const p=player.pet;if(!p){toast('没有灵兽');return}
-  const yao=YAO_REALMS[p.yaoRealm||0];
-  const qInfo=PET_QUALITY_INFO[p.quality||'common'];
+  const yao=YAO_REALMS[p.yaoRealm||0];const qInfo=PET_QUALITY_INFO[p.quality||'common'];
   let html=`<div class="modal-title">灵 兽 详 情</div><div class="bio-name-row">${p.icon||''} ${p.name}</div><div class="bio-dao-row">道号 · ${p.dao||'未取'} · ${p.gender==='公'?'♂':'♀'}</div><div class="bio-dao-row">品质 · <span style="color:${qInfo.color};">${qInfo.name}</span></div><div class="bio-realm-row">妖修境界 · ${yao.name}（${yao.desc}）</div><div class="bio-stat-grid"><div class="bio-stat-item"><div class="lbl">气 血</div><div class="val hp">${p.hp||0}/${p.maxHp||0}</div></div><div class="bio-stat-item"><div class="lbl">灵 力</div><div class="val mp">${p.mp||0}/${p.maxMp||0}</div></div><div class="bio-stat-item"><div class="lbl">攻 击</div><div class="val">${p.atk||0}</div></div><div class="bio-stat-item"><div class="lbl">防 御</div><div class="val">${p.def||0}</div></div><div class="bio-stat-item"><div class="lbl">敏 捷</div><div class="val agi">${p.agility||0}</div></div><div class="bio-stat-item"><div class="lbl">修 为</div><div class="val">${p.yaoExp||0}/100</div></div><div class="bio-stat-item"><div class="lbl">好 感</div><div class="val">${p.favor||0}</div></div></div><div style="margin-top:10px;padding:10px;background:rgba(168,135,92,.08);border:1px solid var(--paper-dk);"><div style="font-size:11px;color:#8b7355;margin-bottom:4px;">喜好</div><div style="font-size:12px;color:var(--wood-dk);">菜肴：${p.favDish||'—'} · 物品：${p.favItem||'—'}</div></div>`;
   if(p.yaoRealm>=5){html+=`<div style="text-align:center;margin-top:14px;"><div style="font-size:13px;color:#4a7a4a;margin-bottom:10px;">✦ 可化形为人 ✦</div><button class="card-actions" style="display:inline-block;" onclick="transformPet()">化 形</button></div>`}
   html+=`<button class="modal-close" onclick="closeModal()">关 闭</button>`;
@@ -1904,7 +2182,7 @@ function viewPetDetail(){
 function transformPet(){
   const p=player.pet;if(!p||p.yaoRealm<5){toast('妖修境界不足');return}
   const dao=p.dao||`${p.name}灵修`;
-  const npc={id:genId(),name:dao,dao:dao,gender:p.gender||'未知',sect:'',position:'灵兽化形',desc:`由灵兽${p.name}化形而来。`,favDish:p.favDish||'灵茶',favItem:p.favItem||'寒玉笛',favor:p.favor||50,isYao:true,realmIndex:Math.min(p.yaoRealm,REALMS.length-1),atk:p.atk||10,def:p.def||5,maxHp:p.maxHp||60,agility:p.agility||10,dodge:5,crit:5,critDmg:150,weapon:null,acc1:null,acc2:null,pet:null,fromPet:true,petData:p,ownerPlayer:true,appearance:70,talent:70,spiritRoot:player.spiritRoot,physique:'none'};
+  const npc={id:genId(),name:dao,dao:dao,gender:p.gender||'未知',sect:'',position:'灵兽化形',desc:`由灵兽${p.name}化形而来。`,favDish:p.favDish||'灵茶',favItem:p.favItem||'寒玉笛',favor:p.favor||50,isYao:true,realmIndex:Math.min(p.yaoRealm,REALMS.length-1),atk:p.atk||10,def:p.def||5,maxHp:p.maxHp||60,agility:p.agility||10,dodge:5,crit:5,critDmg:150,weapon:null,acc1:null,acc2:null,pet:null,fromPet:true,petData:p,ownerPlayer:true,appearance:70,talent:70,spiritRoot:{type:'triple'},physique:'none'};
   player.relations.push(npc);player.pet=null;
   log(`【化形】${p.icon} ${p.name}化形成人，道号「${dao}」。`,'good');
   toast(`${p.name} 化形成功！`);closeModal();refreshUI();
@@ -1918,7 +2196,9 @@ function useEvolutionPill(index){
   toast('已服用');refreshUI();openBag();
 }
 
-/* ========== 因缘录 ========== */
+/* ============================================================
+   三十八、因缘录
+   ============================================================ */
 function openRelationships(){
   let html=`<div class="modal-title">因 缘 录</div>`;
   const rels=player.relations||[];
@@ -1949,9 +2229,18 @@ function revertPet(i){
   const r=player.relations[i];if(!r||!r.fromPet){toast('该道友不是灵兽化形');return}
   if(player.pet){toast('灵兽栏已有灵兽');return}
   if(!confirm(`让 ${r.name} 重新变回兽体？`))return;
-  const petData=r.petData||{};petData.name=r.name;petData.dao=r.dao;petData.id=genId();petData.type='pet';
+  const petData=r.petData||{};
+  /* 修正：恢复种族名 */
+  const speciesKey=petData.speciesKey;
+  if(speciesKey&&PET_SPECIES[speciesKey]){
+    petData.name=PET_SPECIES[speciesKey].name;
+    petData.icon=PET_SPECIES[speciesKey].icon;
+  }
+  petData.dao=r.dao;
+  petData.id=genId();
+  petData.type='pet';
   player.pet=petData;player.relations.splice(i,1);
-  log(`【化兽】${r.name}恢复兽体。`,'info');toast('已恢复兽体');openRelationships();
+  log(`【化兽】${petData.name}恢复兽体。`,'info');toast('已恢复兽体');openRelationships();
 }
 function visitNpc(i){const r=player.relations[i];r.favor=(r.favor||0)+3;const callName=getNpcCallName(r);log(`【拜访】${r.name}称你为「${callName}」，好感+3。`,'good');toast(`拜访 ${r.name}`);advanceTime();refreshUI();openRelationships()}
 function sparNpc(i){const r=player.relations[i];const gain=Math.max(5,Math.floor(calcPower(player)/8+Math.random()*10));player.exp+=gain;r.favor=(r.favor||0)+1;log(`【切磋】修为+${gain}，好感+1。`,'good');toast(`+${gain}修为`);advanceTime();refreshUI();openRelationships()}
@@ -2007,7 +2296,9 @@ function givePetEggReal(npcIdx,eggIdx){
 }
 function removeNpc(i){const r=player.relations[i];if(!confirm(`确定与 ${r.name} 断交？`))return;player.relations.splice(i,1);log(`【因缘录】与 ${r.name} 断交。`,'system');openRelationships()}
 
-/* ========== 角色状态 ========== */
+/* ============================================================
+   三十九、角色状态 / 修习功法
+   ============================================================ */
 function openCharacterSheet(){
   const need=getExpNeeded();const pct=Math.min(100,player.exp/need*100);
   const nick=getNickname();
@@ -2029,7 +2320,7 @@ function openCharacterSheet(){
     <div class="bio-stat-item"><div class="lbl">闪 避</div><div class="val">${player.dodge}%</div></div>
     <div class="bio-stat-item"><div class="lbl">暴 击</div><div class="val crit">${player.crit}%</div></div>
     <div class="bio-stat-item"><div class="lbl">暴 伤</div><div class="val crit">${player.critDmg}%</div></div>
-    <div class="bio-stat-item"><div class="lbl">丹 毒</div><div class="val tox" style="color:#8b3a3a;">${Math.floor(player.pillToxicity||0)}/100</div></div>
+    <div class="bio-stat-item"><div class="lbl">丹 毒</div><div class="val" style="color:#8b3a3a;">${Math.floor(player.pillToxicity||0)}/100</div></div>
     <div class="bio-stat-item"><div class="lbl">厨 艺</div><div class="val">${player.cooking}</div></div>
     <div class="bio-stat-item"><div class="lbl">炼 丹</div><div class="val">${player.alchemy||0}</div></div>
     <div class="bio-stat-item"><div class="lbl">灵 石</div><div class="val">${player.gold}</div></div>
@@ -2045,8 +2336,7 @@ function openCharacterSheet(){
   if(player.skills&&player.skills.length>0){
     html+=`<div class="section-label">修 习 功 法</div><div class="item-list">`;
     player.skills.forEach(sk=>{
-      const q=SKILL_QUALITY[sk.quality];
-      const typeLabel=sk.type==='passive'?'被动':'主动';
+      const q=SKILL_QUALITY[sk.quality];const typeLabel=sk.type==='passive'?'被动':'主动';
       html+=`<div class="item-entry"><div><div class="item-name">${sk.name} <span class="tag tag-${sk.quality}">${q.name}</span> <span style="color:#8b7355;font-size:11px;">${sk.tier}阶${sk.level}级 ${typeLabel}</span></div><div class="item-desc">${getSkillEffectStr(sk)}</div></div></div>`;
     });
     html+=`</div>`;
@@ -2080,42 +2370,9 @@ function upgradeSkillLevel(skillId){
   toast(`${sk.name} ${sk.level} 级`);refreshUI();openSkills();
 }
 
-/* ========== 存档 ========== */
-function initSaves(){try{const raw=localStorage.getItem(STORAGE_KEY);saveSlots=raw?JSON.parse(raw):new Array(MANUAL_SLOTS).fill(null)}catch{saveSlots=new Array(MANUAL_SLOTS).fill(null)}if(!Array.isArray(saveSlots)||saveSlots.length<MANUAL_SLOTS){const t=new Array(MANUAL_SLOTS).fill(null);if(Array.isArray(saveSlots))for(let i=0;i<Math.min(saveSlots.length,MANUAL_SLOTS);i++)t[i]=saveSlots[i];saveSlots=t}}
-function saveToSlot(slotIndex){if(!player)return;const data=JSON.parse(JSON.stringify(player));data._saveTime=new Date().toLocaleString('zh-CN');if(slotIndex===AUTO_SLOT)localStorage.setItem(AUTO_KEY,JSON.stringify(data));else{saveSlots[slotIndex-1]=data;localStorage.setItem(STORAGE_KEY,JSON.stringify(saveSlots))}toast('存档成功')}
-function loadFromSlot(slotIndex){
-  let data;
-  if(slotIndex===AUTO_SLOT){const raw=localStorage.getItem(AUTO_KEY);if(!raw){toast('无自动存档');return}data=JSON.parse(raw)}
-  else{if(!saveSlots[slotIndex-1]){toast('空存档位');return}data=saveSlots[slotIndex-1]}
-  const def=defaultPlayer();
-  for(const k in def)if(data[k]===undefined)data[k]=def[k];
-  if(!data.name)data.name={sur:'',given:'',dao:'',nickname:''};
-  if(data.name.dao===undefined)data.name.dao='';if(data.name.nickname===undefined)data.name.nickname='';
-  if(!Array.isArray(data.skills))data.skills=[];if(!Array.isArray(data.relations))data.relations=[];if(!Array.isArray(data.petEggs))data.petEggs=[];
-  if(!data.spiritRoot)data.spiritRoot=rollSpiritRoot(0);
-  if(!data.physique)data.physique='none';
-  if(typeof data.year!=='number')data.year=1;
-  if(typeof data.month!=='number')data.month=1;
-  if(typeof data.pillToxicity!=='number')data.pillToxicity=0;
-  if(!Array.isArray(data.shopXinfaStock)||data.shopXinfaStock.length===0){const s=initShopSkillStock();data.shopXinfaStock=s.xinfaStock;data.shopJianfaStock=s.jianfaStock}
-  if(!data.pillDB||!data.pillDB.common)data.pillDB=genAllPills();
-  player=data;refreshUI();closeModal();toast('读档成功');
-}
-function deleteSlot(slotIndex){if(slotIndex===AUTO_SLOT)localStorage.removeItem(AUTO_KEY);else{saveSlots[slotIndex-1]=null;localStorage.setItem(STORAGE_KEY,JSON.stringify(saveSlots))}openSavePanel()}
-function autoSave(){saveToSlot(AUTO_SLOT)}
-function openSavePanel(){
-  let html=`<div class="modal-title">存 档 · 读 档</div>`;
-  const autoRaw=localStorage.getItem(AUTO_KEY);let autoData=null;try{autoData=autoRaw?JSON.parse(autoRaw):null}catch{}
-  html+=`<div class="save-slot auto"><div class="slot-info"><div class="slot-title">📁 自动存档</div><div class="slot-detail">${autoData?`${autoData._saveTime||'—'} · ${autoData.year||1}年${autoData.month||1}月${autoData.day||1}日`:'暂无'}</div></div><div class="slot-actions">${autoData?`<button onclick="loadFromSlot(0)">读 档</button>`:''}${autoData?`<button onclick="deleteSlot(0);openSavePanel();">删 除</button>`:''}</div></div>`;
-  for(let i=0;i<MANUAL_SLOTS;i++){
-    const d=saveSlots[i];
-    html+=`<div class="save-slot"><div class="slot-info"><div class="slot-title">存档位 ${i+1}</div><div class="slot-detail">${d?`${d._saveTime||'—'} · ${d.year||1}年${d.month||1}月${d.day||1}日`:'空'}</div></div><div class="slot-actions"><button onclick="saveToSlot(${i+1});openSavePanel();">存 档</button>${d?`<button onclick="loadFromSlot(${i+1})">读 档</button>`:''}${d?`<button onclick="deleteSlot(${i+1});openSavePanel();">删 除</button>`:''}</div></div>`;
-  }
-  html+=`<button class="modal-close" onclick="closeModal()">关 闭</button>`;
-  showModal(html);
-}
-
-/* ========== 天道系统 ========== */
+/* ============================================================
+   四十、天道后台
+   ============================================================ */
 let adminUnlocked=false;
 function openAdmin(){
   if(!adminUnlocked){
@@ -2139,13 +2396,7 @@ function renderAdminPanel(){
     <div class="admin-row"><label>道 号</label><input type="text" id="admDao" value="${getDao()}" maxlength="6"></div>
     <div class="admin-row"><label>小 名</label><input type="text" id="admNick" value="${getNickname()}" maxlength="4"></div>
     <div class="admin-row"><label>灵 根</label><select id="admRoot">
-      <option value="chaos" ${player.spiritRoot.type==='chaos'?'selected':''}>混沌体</option>
-      <option value="mutated" ${player.spiritRoot.type==='mutated'?'selected':''}>变异灵根</option>
-      <option value="heavenly" ${player.spiritRoot.type==='heavenly'?'selected':''}>天灵根</option>
-      <option value="dual" ${player.spiritRoot.type==='dual'?'selected':''}>双灵根</option>
-      <option value="triple" ${player.spiritRoot.type==='triple'?'selected':''}>三灵根</option>
-      <option value="quad" ${player.spiritRoot.type==='quad'?'selected':''}>四灵根</option>
-      <option value="penta" ${player.spiritRoot.type==='penta'?'selected':''}>五灵根</option>
+      ${Object.keys(SPIRIT_ROOTS).map(k=>`<option value="${k}" ${player.spiritRoot.type===k?'selected':''}>${SPIRIT_ROOTS[k].name}</option>`).join('')}
     </select></div>
     <div class="admin-row"><label>体 质</label><select id="admPhys">
       ${Object.keys(PHYSIQUES).map(k=>`<option value="${k}" ${player.physique===k?'selected':''}>${PHYSIQUES[k].name}</option>`).join('')}
@@ -2174,7 +2425,6 @@ function renderAdminPanel(){
     <div class="admin-row"><label>时辰0-11</label><input type="number" id="admShichen" value="${player.shichenIndex}" min="0" max="11"></div>
     <button class="admin-submit" onclick="applyAdmin()">应 用 修 改</button>
   </div>
-
   <div style="margin-top:14px;border-top:1px solid #d8cbb0;padding-top:12px;">
     <div style="font-size:12px;color:#8b7355;margin-bottom:8px;">━ 快速操作 ━</div>
     <div class="quick-actions">
@@ -2189,18 +2439,6 @@ function renderAdminPanel(){
       <button onclick="adminAddAllHerbs()">全灵草各10个</button>
     </div>
   </div>
-
-  <div style="margin-top:14px;border-top:1px solid #d8cbb0;padding-top:12px;">
-    <div style="font-size:12px;color:#8b7355;margin-bottom:8px;">━ 添加物品 ━</div>
-    <div class="admin-row"><label>类别</label><select id="admItemCategory" onchange="updateItemOptions()">
-      <option value="weapon">武器</option><option value="buddhist">佛器</option><option value="acc">饰品</option>
-      <option value="herb">灵草</option><option value="gift">礼品</option><option value="ingredient">食材</option><option value="dish">菜肴</option>
-    </select></div>
-    <div class="admin-row"><label>物品</label><select id="admItemName"></select></div>
-    <div class="admin-row"><label>数量</label><input type="number" id="admItemCount" value="1" min="1"></div>
-    <button class="admin-submit" onclick="adminAddItem2()">添 加 物 品</button>
-  </div>
-
   <div style="margin-top:14px;border-top:1px solid #d8cbb0;padding-top:12px;">
     <div style="font-size:12px;color:#8b7355;margin-bottom:8px;">━ 添加丹药 ━</div>
     <div class="admin-row"><label>品级</label><select id="admPillQuality" onchange="updatePillOptions()"><option value="common">下品</option><option value="mid">中品</option><option value="high">上品</option><option value="supreme">顶级</option></select></div>
@@ -2208,36 +2446,25 @@ function renderAdminPanel(){
     <div class="admin-row"><label>数量</label><input type="number" id="admPillCount" value="1" min="1"></div>
     <button class="admin-submit" onclick="adminAddPills()">添 加 丹 药</button>
   </div>
-
   <div style="margin-top:14px;border-top:1px solid #d8cbb0;padding-top:12px;">
-    <div style="font-size:12px;color:#8b7355;margin-bottom:8px;">━ 添加秘籍 ━</div>
-    <div class="admin-row"><label>类型</label><select id="admBookType"><option value="xinfa">心法</option><option value="jianfa">剑法</option></select></div>
-    <div class="admin-row"><label>品阶</label><select id="admBookQuality" onchange="updateBookOptions()"><option value="common">凡品</option><option value="mid">中品</option><option value="high">上品</option><option value="supreme">极品</option></select></div>
-    <div class="admin-row"><label>阶数</label><select id="admBookTier"><option value="1">1阶</option><option value="2">2阶</option><option value="3">3阶</option></select></div>
-    <div class="admin-row"><label>数量</label><input type="number" id="admBookCount" value="1" min="1"></div>
-    <button class="admin-submit" onclick="adminAddSkillBook()">添 加 秘 籍</button>
+    <div style="font-size:12px;color:#8b7355;margin-bottom:8px;">━ 添加灵草 ━</div>
+    <div class="admin-row"><label>灵草</label><select id="admHerbName">${HERB_LIST.map(h=>`<option value="${h}">${h}（${HERB_DB[h]}灵石）</option>`).join('')}</select></div>
+    <div class="admin-row"><label>数量</label><input type="number" id="admHerbCount" value="10" min="1"></div>
+    <button class="admin-submit" onclick="adminAddHerbs()">添 加 灵 草</button>
   </div>
-
+  <div style="margin-top:14px;border-top:1px solid #d8cbb0;padding-top:12px;">
+    <div style="font-size:12px;color:#8b7355;margin-bottom:8px;">━ 添加灵根/体质 ━</div>
+    <div class="quick-actions">
+      <button onclick="adminAddItemByName('千年灵根果')">+千年灵根果</button>
+      <button onclick="adminAddItemByName('混沌种子')">+混沌种子</button>
+      <button onclick="adminAddItemByName('净毒药水')">+净毒药水</button>
+      <button onclick="adminAddItemByName('化形丹')">+化形丹</button>
+      <button onclick="adminAddItemByName('易名符')">+易名符</button>
+      <button onclick="adminAddItemByName('改髓丹')">+改髓丹</button>
+    </div>
+  </div>
   <button class="modal-close" onclick="closeModal()">关 闭</button>`;
-  showModal(html);
-  updateItemOptions();updatePillOptions();
-}
-const INGREDIENT_DB_LOCAL={大米:1,青菜:2,猪肉:3,鸡肉:3,鱼:3,牛肉:4,鸭肉:5,虾仁:5,蟹肉:6,豆腐:2,灵果:8,灵兽肉:12,灵芝:15,人参:12,红枣:2,莲子:2,银耳:2,枸杞:2,菊花:1,茶叶:2,灵茶:6,桂花:3,蜂蜜:4,雪莲:20,灵泉水:4};
-function updateItemOptions(){
-  const cat=document.getElementById('admItemCategory').value;const sel=document.getElementById('admItemName');if(!sel)return;let opts='';
-  if(cat==='weapon')['普通铁剑','精铁长剑','青云剑','玄铁重剑'].forEach(n=>opts+=`<option value="${n}">${n}</option>`);
-  else if(cat==='buddhist')['禅杖','念珠','降魔杵','金钵','菩提念珠'].forEach(n=>opts+=`<option value="${n}">${n}</option>`);
-  else if(cat==='acc')['狼牙护符','灵猴玉佩','护心铜镜','疾风铃','幽魂精魄'].forEach(n=>opts+=`<option value="${n}">${n}</option>`);
-  else if(cat==='herb')HERB_LIST.forEach(n=>opts+=`<option value="${n}">${n}</option>`);
-  else if(cat==='gift')GIFT_DB.forEach(g=>opts+=`<option value="${g.name}">${g.name}</option>`);
-  else if(cat==='ingredient')Object.keys(INGREDIENT_DB_LOCAL).forEach(n=>opts+=`<option value="${n}">${n}</option>`);
-  else if(cat==='dish')RECIPE_DB.forEach(r=>opts+=`<option value="${r.name}">${r.name}</option>`);
-  sel.innerHTML=opts;
-}
-function updateBookOptions(){
-  const q=document.getElementById('admBookQuality').value;
-  const t=document.getElementById('admBookTier');const maxT=Math.min(SKILL_QUALITY[q].maxTier,5);
-  let opts='';for(let i=1;i<=maxT;i++)opts+=`<option value="${i}">${i}阶</option>`;t.innerHTML=opts;
+  showModal(html);updatePillOptions();
 }
 function updatePillOptions(){
   const q=document.getElementById('admPillQuality').value;const sel=document.getElementById('admPillName');if(!sel)return;
@@ -2277,31 +2504,27 @@ function adminClearTox(){player.pillToxicity=0;refreshUI();toast('丹毒已清�
 function adminUnlockAllSecrets(){['low','mid','high','top'].forEach(t=>REALMS_LIST[t].forEach(r=>r.unlocked=true));toast('已解锁全部秘境');renderAdminPanel()}
 function adminRefreshPills(){player.pillDB=genAllPills();toast('丹药已重置');renderAdminPanel()}
 function adminAddAllHerbs(){HERB_LIST.forEach(h=>{for(let i=0;i<10;i++)player.bag.push({id:genId(),type:'herb',name:h,desc:'炼丹灵草。',sellPrice:Math.floor(HERB_DB[h]*.3),price:HERB_DB[h]})});toast('已添加全部40种灵草各10个');renderAdminPanel()}
-function adminAddItem2(){
-  const cat=document.getElementById('admItemCategory').value;const name=document.getElementById('admItemName').value;const count=Math.max(1,parseInt(document.getElementById('admItemCount').value)||1);
-  if(cat==='weapon'||cat==='buddhist'||cat==='acc'){const base=ITEM_DB[name];if(!base){toast('物品不存在');return}for(let i=0;i<count;i++)player.bag.push({...base,id:genId(),sellPrice:Math.floor((base.price||20)*.5)})}
-  else if(cat==='herb'){const price=HERB_DB[name];for(let i=0;i<count;i++)player.bag.push({id:genId(),type:'herb',name,desc:'炼丹灵草。',sellPrice:Math.floor(price*.3),price})}
-  else if(cat==='gift'){const g=GIFT_DB.find(x=>x.name===name);if(!g){toast('物品不存在');return}for(let i=0;i<count;i++)player.bag.push({type:'gift',name:g.name,desc:'赠礼',price:g.price,id:genId(),sellPrice:Math.floor(g.price*.5)})}
-  else if(cat==='ingredient'){const price=INGREDIENT_DB_LOCAL[name];for(let i=0;i<count;i++)player.bag.push({type:'ingredient',name,desc:'烹饪食材。',id:genId(),sellPrice:Math.floor(price*.3)})}
-  else if(cat==='dish'){const r=RECIPE_DB.find(x=>x.name===name);for(let i=0;i<count;i++)player.bag.push(dishToItem(r))}
-  toast(`已添加 ${name}×${count}`);renderAdminPanel();
-}
 function adminAddPills(){
   const q=document.getElementById('admPillQuality').value;const pid=document.getElementById('admPillName').value;const count=Math.max(1,parseInt(document.getElementById('admPillCount').value)||1);
   const pill=player.pillDB[q].find(p=>p.id===pid);if(!pill){toast('丹药不存在');return}
   for(let i=0;i<count;i++)player.bag.push({id:genId(),type:'consume',name:pill.name,desc:pill.desc,effect:{...pill.effect},heal:pill.effect.heal||0,mana:pill.effect.mana||0,exp:pill.effect.exp||0,bonus:pill.effect.bonus||0,maxHp:pill.effect.maxHp||0,maxMp:pill.effect.maxMp||0,atk:pill.effect.atk||0,def:pill.effect.def||0,dodge:pill.effect.dodge||0,sellPrice:pill.sellPrice,price:pill.buyPrice,tox:pill.tox});
   toast(`已添加 ${pill.name}×${count}`);renderAdminPanel();
 }
-function adminAddSkillBook(){
-  const type=document.getElementById('admBookType').value;const q=document.getElementById('admBookQuality').value;const tier=Math.max(1,parseInt(document.getElementById('admBookTier').value)||1);const count=Math.max(1,parseInt(document.getElementById('admBookCount').value)||1);
-  for(let i=0;i<count;i++){
-    const sk=type==='xinfa'?createXinfa(tier,q):createJianfa(tier,q);
-    player.bag.push({id:genId(),type:'skillbook',skillId:sk.id,bookTier:tier,skillData:sk,name:`${sk.name}·秘`,desc:`修习或提升「${sk.name}」`,price:600*tier,sellPrice:300*tier});
-  }
-  toast(`已添加秘籍×${count}`);renderAdminPanel();
+function adminAddHerbs(){
+  const name=document.getElementById('admHerbName').value;const count=Math.max(1,parseInt(document.getElementById('admHerbCount').value)||1);
+  const price=HERB_DB[name];
+  for(let i=0;i<count;i++)player.bag.push({id:genId(),type:'herb',name,desc:'炼丹灵草。',sellPrice:Math.floor(price*.3),price});
+  toast(`已添加 ${name}×${count}`);renderAdminPanel();
+}
+function adminAddItemByName(name){
+  const base=ITEM_DB[name];if(!base){toast('物品不存在');return}
+  player.bag.push({...base,id:genId(),sellPrice:Math.floor((base.price||20)*.5)});
+  toast(`已添加 ${name}`);renderAdminPanel();
 }
 
-/* ========== 轮回 ========== */
+/* ============================================================
+   四十一、轮回 / 刷新
+   ============================================================ */
 function openReincarnate(){
   const html=`<div class="modal-title">主 动 入 轮 回</div><div class="confirm-text">你确定要放弃当前的一切，<em>重新入轮回</em>吗？<br><br>所有境界、物品、功法将<em>全部清空</em>，<br>且此操作<em>无法撤销</em>。</div><div class="confirm-buttons"><button class="btn-no" onclick="closeModal()">再 想 想</button><button class="btn-yes" onclick="doReincarnate()">入 轮 回</button></div>`;
   showModal(html);
@@ -2311,109 +2534,7 @@ function doReincarnate(){
   player=defaultPlayer();player.name=oldName;grantNewbiePack();
   refreshUI();closeModal();log('【轮回】一切归零。','system');toast('已入轮回');autoSave();
 }
-
-/* ========== 刷新 ========== */
 function refreshGame(){if(player){try{const data=JSON.parse(JSON.stringify(player));data._saveTime=new Date().toLocaleString('zh-CN');localStorage.setItem(AUTO_KEY,JSON.stringify(data))}catch{}}location.reload()}
-
-/* ========== 弹窗 ========== */
-function showModal(html){document.getElementById('modalContent').innerHTML=html;document.getElementById('modalOverlay').classList.add('active')}
-function closeModal(){if(combatState.active){toast('战斗中无法离开');return}document.getElementById('modalOverlay').classList.remove('active')}
-document.getElementById('modalOverlay').addEventListener('click',function(e){if(e.target===this)closeModal()});
-
-/* ========== 姓名 ========== */
-function showNameModal(){
-  localStorage.setItem(STORY_KEY,'1');
-  document.getElementById('storyModal').style.display='none';
-  document.getElementById('nameModal').classList.add('active');
-  updateNameButtonState();
-  setTimeout(()=>{const el=document.getElementById('nameSur');if(el)el.focus()},200);
-}
-function updateNamePreview(){
-  const sur=document.getElementById('nameSur').value.trim(),given=document.getElementById('nameGiven').value.trim(),dao=document.getElementById('nameDao').value.trim(),nick=document.getElementById('nameNick').value.trim();
-  const full=sur+given;let txt='';
-  if(full&&dao)txt=`${full}（${dao}）`;else if(full)txt=full;else if(dao)txt=dao;else txt='—';
-  document.getElementById('namePreview').textContent=txt;
-  document.getElementById('namePreviewNick').textContent=nick?`小名：${nick}`:'';
-  updateNameButtonState();
-}
-function updateNameButtonState(){
-  const sur=document.getElementById('nameSur')?.value.trim()||'';
-  const given=document.getElementById('nameGiven')?.value.trim()||'';
-  const dao=document.getElementById('nameDao')?.value.trim()||'';
-  const btn=document.getElementById('confirmNameBtn');
-  if(btn)btn.disabled=!(sur&&given&&dao);
-}
-document.addEventListener('input',function(e){if(['nameSur','nameGiven','nameDao','nameNick'].includes(e.target.id))updateNamePreview()});
-function confirmName(){
-  const sur=document.getElementById('nameSur').value.trim(),given=document.getElementById('nameGiven').value.trim(),dao=document.getElementById('nameDao').value.trim(),nickname=document.getElementById('nameNick').value.trim();
-  if(!sur||!given||!dao){toast('姓、名、道号必须填写');return}
-  if(sur.length>2){toast('姓≤2字');return}
-  if(given.length>4){toast('名≤4字');return}
-  if(dao.length>6){toast('道号≤6字');return}
-  if(nickname.length>4){toast('小名≤4字');return}
-  const nameData={sur,given,dao,nickname};
-  localStorage.setItem(NAME_KEY,JSON.stringify(nameData));
-  document.getElementById('nameModal').classList.remove('active');
-  initGame(nameData);
-}
-
-/* ========== 启动 ========== */
-function startGame(){localStorage.setItem(STORY_KEY,'1');showNameModal()}
-function initGame(nameData){
-  document.getElementById('game').style.display='block';
-  initSaves();
-  const autoRaw=localStorage.getItem(AUTO_KEY);
-  let loaded=false;
-  if(autoRaw){
-    try{
-      const data=JSON.parse(autoRaw);
-      const def=defaultPlayer();
-      for(const k in def)if(data[k]===undefined)data[k]=def[k];
-      if(typeof data.shichenIndex!=='number'||data.shichenIndex<0||data.shichenIndex>11)data.shichenIndex=getRealShichenIndex();
-      if(!data.name)data.name={sur:'',given:'',dao:'',nickname:''};
-      if(data.name.dao===undefined)data.name.dao='';if(data.name.nickname===undefined)data.name.nickname='';
-      if(!Array.isArray(data.skills))data.skills=[];if(!Array.isArray(data.relations))data.relations=[];if(!Array.isArray(data.petEggs))data.petEggs=[];
-      if(!data.spiritRoot)data.spiritRoot=rollSpiritRoot(0);
-      if(!data.physique)data.physique='none';
-      if(typeof data.year!=='number')data.year=1;if(typeof data.month!=='number')data.month=1;
-      if(typeof data.pillToxicity!=='number')data.pillToxicity=0;
-      if(!Array.isArray(data.shopXinfaStock)||data.shopXinfaStock.length===0){const s=initShopSkillStock();data.shopXinfaStock=s.xinfaStock;data.shopJianfaStock=s.jianfaStock}
-      if(!data.pillDB||!data.pillDB.common)data.pillDB=genAllPills();
-      player=data;loaded=true;
-    }catch(e){}
-  }
-  if(!loaded){
-    player=defaultPlayer();
-    if(nameData)player.name=nameData;
-    else{const savedName=localStorage.getItem(NAME_KEY);if(savedName){try{player.name=JSON.parse(savedName)}catch{}}if(!player.name.dao)player.name.dao='';if(!player.name.nickname)player.name.nickname=''}
-    grantNewbiePack();
-  }else if(nameData){
-    if(!player.name.sur&&!player.name.given&&!player.name.dao)player.name=nameData;
-  }
-  refreshUI();
-  if(loaded)log(`【系统】读取存档成功，${dateStr()}继续修行。`,'system');
-  else{
-    const rd=getRootDisplay();
-    log(`【修仙世界】${getDisplayName()}，灵根【${rd.name}】，一切从零开始。`,'system');
-    log('【提示】每月25号黑市开放拍卖。丹毒满100会毒发身亡！','system');
-  }
-  autoSave();
-}
-
-/* ========== 持久化 ========== */
-window.addEventListener('beforeunload',function(){if(!player)return;try{const data=JSON.parse(JSON.stringify(player));data._saveTime=new Date().toLocaleString('zh-CN');localStorage.setItem(AUTO_KEY,JSON.stringify(data))}catch{}});
-setInterval(function(){if(!player)return;try{const data=JSON.parse(JSON.stringify(player));data._saveTime=new Date().toLocaleString('zh-CN');localStorage.setItem(AUTO_KEY,JSON.stringify(data))}catch{}},60000);
-
-window.addEventListener('DOMContentLoaded',function(){
-  const storySeen=localStorage.getItem(STORY_KEY);
-  const autoRaw=localStorage.getItem(AUTO_KEY);
-  const savedName=localStorage.getItem(NAME_KEY);
-  if(storySeen){
-    document.getElementById('storyModal').style.display='none';
-    if(autoRaw||savedName)initGame();
-    else{document.getElementById('nameModal').classList.add('active');updateNameButtonState()}
-  }else document.getElementById('storyModal').style.display='flex';
-});
 </script>
 </body>
 </html>
