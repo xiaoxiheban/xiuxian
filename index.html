@@ -238,6 +238,7 @@ body::before{content:'';position:fixed;inset:0;background-image:repeating-linear
 .reward-item .rlbl{color:var(--ink-dim);letter-spacing:3px}
 .reward-item .rval{color:var(--jade);font-weight:bold;font-size:17px}
 .reward-item .rval.loot{color:var(--gold)}
+.gold-badge{display:inline-block;padding:2px 10px;background:rgba(166,124,0,.08);border:1px solid var(--gold);color:var(--gold);font-size:12px;font-weight:bold}
 </style>
 </head>
 <body>
@@ -317,8 +318,8 @@ const YAO_REALMS=[{name:'聚灵',desc:'感应天地灵气'},{name:'通智',desc:
 const SHICHEN=[{name:'子时',period:'夜半',tip:'宜打坐修炼'},{name:'丑时',period:'鸡鸣',tip:'宜打坐修炼'},{name:'寅时',period:'平旦',tip:'宜打坐修炼'},{name:'卯时',period:'日出',tip:'宜出门历练'},{name:'辰时',period:'食时',tip:'宜出门历练'},{name:'巳时',period:'隅中',tip:'宜出门历练'},{name:'午时',period:'日中',tip:'宜修炼突破'},{name:'未时',period:'日昳',tip:'宜修炼突破'},{name:'申时',period:'晡时',tip:'宜出门历练'},{name:'酉时',period:'日入',tip:'宜出门历练'},{name:'戌时',period:'黄昏',tip:'宜打坐修炼'},{name:'亥时',period:'人定',tip:'宜打坐修炼'}];
 function getRealShichenIndex(){const h=new Date().getHours();if(h>=23||h<1)return 0;return Math.floor((h+1)/2)}
 
-/* ========== 品阶 ========== */
-const SKILL_QUALITY={common:{name:'凡品',color:'#8b7355',maxTier:5},mid:{name:'中品',color:'#4a7a4a',maxTier:6},high:{name:'上品',color:'#2c5a80',maxTier:8},supreme:{name:'极品',color:'#a8342a',maxTier:10}};
+/* ========== 品阶 & 品质倍率 ========== */
+const SKILL_QUALITY={common:{name:'凡品',color:'#8b7355',maxTier:5,mult:1},mid:{name:'中品',color:'#4a7a4a',maxTier:6,mult:1.8},high:{name:'上品',color:'#2c5a80',maxTier:8,mult:3},supreme:{name:'极品',color:'#a8342a',maxTier:10,mult:5}};
 
 /* ========== 名称词库 ========== */
 const XINFA_PREFIX=['玄天','紫霄','太虚','混元','九转','天罡','地煞','阴阳','五行','八卦','星辰','月华','日耀','风雷','冰火','云海','苍穹','碧落','黄泉','幽冥','赤炎','青木','金锋','水灵','土厚','龙吟','凤舞','虎啸','鹤翔','麒麟'];
@@ -328,26 +329,67 @@ const JIANFA_SUFFIX=['剑法','剑诀','剑术','剑经','剑典','剑谱','剑�
 function genXinfaName(){return XINFA_PREFIX[Math.floor(Math.random()*XINFA_PREFIX.length)]+XINFA_SUFFIX[Math.floor(Math.random()*XINFA_SUFFIX.length)]}
 function genJianfaName(){return JIANFA_PREFIX[Math.floor(Math.random()*JIANFA_PREFIX.length)]+JIANFA_SUFFIX[Math.floor(Math.random()*JIANFA_SUFFIX.length)]}
 function genRandomSkillId(){return 'skill_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
-function createXinfa(tier,quality){const name=genXinfaName();return{id:genRandomSkillId(),name,type:'passive',quality:quality||'common',tier:tier||1,level:1,desc:`${name}，温养经脉、强健体魄。`,baseAtk:5,baseDef:3,perLevelAtk:3,perLevelDef:2,perTierAtk:20,perTierDef:12}}
-function createJianfa(tier,quality){const name=genJianfaName();return{id:genRandomSkillId(),name,type:'active',quality:quality||'common',tier:tier||1,level:1,desc:`${name}，剑随身转，蓄力一击。`,baseMul:1.8,perLevelMul:.2,perTierMul:.4,mpCost:10}}
+function createXinfa(tier,quality){const q=quality||'common';const m=SKILL_QUALITY[q].mult;const name=genXinfaName();return{id:genRandomSkillId(),name,type:'passive',quality:q,tier:tier||1,level:1,desc:`${name}，温养经脉、强健体魄。`,baseAtk:Math.floor(5*m),baseDef:Math.floor(3*m),perLevelAtk:Math.floor(3*m),perLevelDef:Math.floor(2*m),perTierAtk:Math.floor(20*m),perTierDef:Math.floor(12*m)}}
+function createJianfa(tier,quality){const q=quality||'common';const m=SKILL_QUALITY[q].mult;const name=genJianfaName();return{id:genRandomSkillId(),name,type:'active',quality:q,tier:tier||1,level:1,desc:`${name}，剑随身转，蓄力一击。`,baseMul:+(1.5+m*.35).toFixed(2),perLevelMul:+(.15+m*.06).toFixed(3),perTierMul:+(.3+m*.15).toFixed(2),mpCost:Math.floor(10+(m-1)*6)}}
 function calcSkillBonus(skill){if(skill.type!=='passive')return{atk:0,def:0};const lvl=skill.level,tier=skill.tier;return{atk:(skill.baseAtk||5)+(lvl-1)*(skill.perLevelAtk||3)+(tier-1)*(skill.perTierAtk||20),def:(skill.baseDef||3)+(lvl-1)*(skill.perLevelDef||2)+(tier-1)*(skill.perTierDef||12)}}
 function getSkillEffectStr(skill){if(skill.type==='passive'){const b=calcSkillBonus(skill);return`攻击 +${b.atk} · 防御 +${b.def}`}const mul=(skill.baseMul||1.8)+(skill.level-1)*(skill.perLevelMul||.2)+(skill.tier-1)*(skill.perTierMul||.4);return`伤害 ×${mul.toFixed(1)} · 耗灵 ${skill.mpCost}`}
 
+/* ========== 商店库存初始化 ========== */
+function initShopSkillStock(){
+  const cfg=[{q:'common',count:8,price:600},{q:'mid',count:5,price:1500},{q:'high',count:3,price:3000},{q:'supreme',count:2,price:8000}];
+  const xinfa=[],jianfa=[];
+  cfg.forEach(c=>{for(let i=0;i<c.count;i++){const xf=createXinfa(1,c.q);xf.price=c.price;xinfa.push(xf);const jf=createJianfa(1,c.q);jf.price=c.price;jianfa.push(jf);}});
+  return{xinfaStock:xinfa,jianfaStock:jianfa};
+}
+
 /* ========== 物品 ========== */
-const ITEM_DB={普通铁剑:{type:'weapon',name:'普通铁剑',desc:'凡铁所铸。',atk:5,price:60},精铁长剑:{type:'weapon',name:'精铁长剑',desc:'精铁锻打。',atk:12,price:200},青云剑:{type:'weapon',name:'青云剑',desc:'剑身泛青。',atk:22,crit:2,price:500},玄铁重剑:{type:'weapon',name:'玄铁重剑',desc:'玄铁所铸。',atk:38,def:5,price:1200},狼牙护符:{type:'acc',name:'狼牙护符',desc:'野狼獠牙。',atk:3,hp:10,price:100},灵猴玉佩:{type:'acc',name:'灵猴玉佩',desc:'沾染灵气。',mp:10,dodge:3,price:130},护心铜镜:{type:'acc',name:'护心铜镜',desc:'可挡刀剑。',def:6,hp:25,price:250},疾风铃:{type:'acc',name:'疾风铃',desc:'铃响身动。',dodge:5,agility:2,price:220},幽魂精魄:{type:'acc',name:'幽魂精魄',desc:'阴冷刺骨。',atk:6,crit:3,price:380},粗制灵草:{type:'consume',name:'粗制灵草',desc:'恢复15点灵力。',mana:15,price:12},解毒丹:{type:'consume',name:'解毒丹',desc:'恢复30点气血。',heal:30,price:15},回春散:{type:'consume',name:'回春散',desc:'恢复80点气血。',heal:80,price:40},聚气散:{type:'consume',name:'聚气散',desc:'恢复60点灵力。',mana:60,price:45},回春丹:{type:'consume',name:'回春丹',desc:'恢复200点气血。',heal:200,price:100},聚气丹:{type:'consume',name:'聚气丹',desc:'恢复150点灵力。',mana:150,price:110},破障丹:{type:'breakthrough',name:'破障丹',desc:'突破+5%。',bonus:5,price:180},凝神丹:{type:'breakthrough',name:'凝神丹',desc:'突破+10%。',bonus:10,price:450},天机丹:{type:'breakthrough',name:'天机丹',desc:'突破+20%。',bonus:20,price:1000},易名符:{type:'rename',name:'易名符',desc:'更改姓名与道号。',price:5000},化形丹:{type:'evolution',name:'化形丹',desc:'辅助灵兽化形。',price:3000}};
+const ITEM_DB={
+  普通铁剑:{type:'weapon',name:'普通铁剑',desc:'凡铁所铸。',atk:5,price:60},
+  精铁长剑:{type:'weapon',name:'精铁长剑',desc:'精铁锻打。',atk:12,price:200},
+  青云剑:{type:'weapon',name:'青云剑',desc:'剑身泛青。',atk:22,crit:2,price:500},
+  玄铁重剑:{type:'weapon',name:'玄铁重剑',desc:'玄铁所铸。',atk:38,def:5,price:1200},
+  // 佛修武器（不能装备，可赠送）
+  禅杖:{type:'weapon',name:'禅杖',desc:'佛门法器，不宜杀生。',atk:15,price:180,buddhist:true,canEquip:false},
+  念珠:{type:'weapon',name:'念珠',desc:'一百零八颗，温养心神。',atk:10,def:3,price:150,buddhist:true,canEquip:false},
+  降魔杵:{type:'weapon',name:'降魔杵',desc:'佛门降魔之物。',atk:28,def:5,price:600,buddhist:true,canEquip:false},
+  金钵:{type:'weapon',name:'金钵',desc:'佛门化缘金钵。',atk:22,crit:3,price:450,buddhist:true,canEquip:false},
+  菩提念珠:{type:'weapon',name:'菩提念珠',desc:'菩提树下所结，灵气充盈。',atk:35,def:8,crit:5,price:1500,buddhist:true,canEquip:false},
+  // 饰品
+  狼牙护符:{type:'acc',name:'狼牙护符',desc:'野狼獠牙。',atk:3,hp:10,price:100},
+  灵猴玉佩:{type:'acc',name:'灵猴玉佩',desc:'沾染灵气。',mp:10,dodge:3,price:130},
+  护心铜镜:{type:'acc',name:'护心铜镜',desc:'可挡刀剑。',def:6,hp:25,price:250},
+  疾风铃:{type:'acc',name:'疾风铃',desc:'铃响身动。',dodge:5,agility:2,price:220},
+  幽魂精魄:{type:'acc',name:'幽魂精魄',desc:'阴冷刺骨。',atk:6,crit:3,price:380},
+  // 恢复类丹药
+  粗制灵草:{type:'consume',name:'粗制灵草',desc:'恢复15点灵力。',mana:15,price:12},
+  解毒丹:{type:'consume',name:'解毒丹',desc:'恢复30点气血。',heal:30,price:15},
+  回春散:{type:'consume',name:'回春散',desc:'恢复80点气血。',heal:80,price:40},
+  聚气散:{type:'consume',name:'聚气散',desc:'恢复60点灵力。',mana:60,price:45},
+  回春丹:{type:'consume',name:'回春丹',desc:'恢复200点气血。',heal:200,price:100},
+  聚气丹:{type:'consume',name:'聚气丹',desc:'恢复150点灵力。',mana:150,price:110},
+  // 修为丹药
+  小还丹:{type:'consume',name:'小还丹',desc:'服之修为 +100。',exp:100,price:80},
+  大还丹:{type:'consume',name:'大还丹',desc:'服之修为 +500。',exp:500,price:400},
+  聚灵丹:{type:'consume',name:'聚灵丹',desc:'服之修为 +2000。',exp:2000,price:1500},
+  悟道丹:{type:'consume',name:'悟道丹',desc:'服之修为 +10000。',exp:10000,price:7000},
+  // 突破类
+  破障丹:{type:'breakthrough',name:'破障丹',desc:'突破+5%。',bonus:5,price:180},
+  凝神丹:{type:'breakthrough',name:'凝神丹',desc:'突破+10%。',bonus:10,price:450},
+  天机丹:{type:'breakthrough',name:'天机丹',desc:'突破+20%。',bonus:20,price:1000},
+  // 其他
+  易名符:{type:'rename',name:'易名符',desc:'更改姓名与道号。',price:5000},
+  化形丹:{type:'evolution',name:'化形丹',desc:'辅助灵兽化形。',price:3000},
+};
 const INGREDIENT_DB={大米:1,青菜:2,猪肉:3,鸡肉:3,鱼:3,牛肉:4,鸭肉:5,虾仁:5,蟹肉:6,豆腐:2,灵果:8,灵兽肉:12,灵芝:15,人参:12,红枣:2,莲子:2,银耳:2,枸杞:2,菊花:1,茶叶:2,灵茶:6,桂花:3,蜂蜜:4,雪莲:20,灵泉水:4};
 const RECIPE_DB=[{name:'白米饭',ingredients:{大米:1},dishPrice:5,effect:'hp',value:10,desc:'最朴素的饱腹之物。',meat:false},{name:'青菜汤',ingredients:{青菜:1,灵泉水:1},dishPrice:15,effect:'hp',value:15,desc:'清淡爽口。',meat:false},{name:'炒时蔬',ingredients:{青菜:2},dishPrice:10,effect:'hp',value:20,desc:'山野时蔬。',meat:false},{name:'蒸鱼',ingredients:{鱼:1,灵泉水:1},dishPrice:18,effect:'hp',value:35,desc:'清蒸河鲜。',meat:true},{name:'红烧肉',ingredients:{猪肉:2,蜂蜜:1},dishPrice:20,effect:'hp',value:45,desc:'肥而不腻。',meat:true},{name:'白切鸡',ingredients:{鸡肉:2},dishPrice:15,effect:'hp',value:40,desc:'皮滑肉嫩。',meat:true},{name:'酱牛肉',ingredients:{牛肉:2,蜂蜜:1},dishPrice:25,effect:'hp',value:50,desc:'卤香入味。',meat:true},{name:'狮子头',ingredients:{猪肉:2,豆腐:1},dishPrice:18,effect:'hp',value:60,desc:'肉丸松软。',meat:true},{name:'八宝鸭',ingredients:{鸭肉:2,红枣:2,莲子:2},dishPrice:30,effect:'hp',value:90,desc:'八珍香浓。',meat:true},{name:'佛跳墙',ingredients:{鸭肉:1,鸡肉:1,猪肉:1,虾仁:2,灵芝:1},dishPrice:80,effect:'hp',value:200,desc:'山珍海味荟萃。',meat:true},{name:'葱油饼',ingredients:{大米:2,蜂蜜:1},dishPrice:12,effect:'hp',value:25,desc:'外酥内软。',meat:false},{name:'阳春面',ingredients:{大米:2},dishPrice:10,effect:'hp',value:20,desc:'清汤暖胃。',meat:false},{name:'小笼包',ingredients:{大米:1,猪肉:1},dishPrice:15,effect:'hp',value:30,desc:'皮薄汁多。',meat:true},{name:'桂花糕',ingredients:{大米:2,桂花:1},dishPrice:18,effect:'hp',value:22,desc:'清甜软糯。',meat:false},{name:'绿豆糕',ingredients:{大米:1,蜂蜜:1},dishPrice:12,effect:'hp',value:18,desc:'入口即化。',meat:false},{name:'云片糕',ingredients:{大米:2,蜂蜜:1},dishPrice:16,effect:'hp',value:20,desc:'层层叠叠。',meat:false},{name:'银耳羹',ingredients:{银耳:1,蜂蜜:1},dishPrice:15,effect:'mp',value:20,desc:'清润养颜。',meat:false},{name:'莲子羹',ingredients:{莲子:2,枸杞:1},dishPrice:15,effect:'mp',value:25,desc:'清心去火。',meat:false},{name:'红枣汤',ingredients:{红枣:2,枸杞:1},dishPrice:12,effect:'hp',value:25,desc:'滋补气血。',meat:false},{name:'人参鸡汤',ingredients:{鸡肉:2,人参:1},dishPrice:40,effect:'hp',value:120,desc:'大补元气。',meat:true},{name:'枸杞茶',ingredients:{枸杞:2},dishPrice:10,effect:'mp',value:15,desc:'养肝明目。',meat:false},{name:'菊花茶',ingredients:{菊花:2},dishPrice:8,effect:'mp',value:12,desc:'清热降火。',meat:false},{name:'灵茶',ingredients:{茶叶:2,灵泉水:1},dishPrice:20,effect:'mp',value:60,desc:'以灵泉水冲泡。',meat:false},{name:'百花酿',ingredients:{桂花:2,蜂蜜:2,灵泉水:1},dishPrice:30,effect:'mp',value:100,desc:'百花酿制。',meat:false},{name:'灵果拼盘',ingredients:{灵果:2},dishPrice:25,effect:'hp',value:80,desc:'鲜美异常。',meat:false},{name:'烤灵兽肉',ingredients:{灵兽肉:2},dishPrice:35,effect:'hp',value:160,desc:'大补之物。',meat:true},{name:'龙井虾仁',ingredients:{虾仁:2,茶叶:1},dishPrice:20,effect:'hp',value:95,desc:'茶香四溢。',meat:true},{name:'蟹粉豆腐',ingredients:{蟹肉:2,豆腐:1},dishPrice:20,effect:'hp',value:85,desc:'蟹黄鲜香。',meat:true},{name:'灵芝炖鸡',ingredients:{鸡肉:2,灵芝:1},dishPrice:45,effect:'hp',value:130,desc:'气血双补。',meat:true},{name:'雪莲羹',ingredients:{雪莲:1,银耳:1,灵泉水:1},dishPrice:60,effect:'mp',value:200,desc:'珍稀灵膳。',meat:false}];
 function dishToItem(r){return{id:genId(),type:'dish',name:r.name,desc:r.desc,heal:r.effect==='hp'?r.value:0,mana:r.effect==='mp'?r.value:0,sellPrice:Math.floor(r.dishPrice*.5)}}
 const GIFT_DB=[{name:'桂花酿',price:60},{name:'碧螺春茶',price:80},{name:'紫檀木梳',price:100},{name:'白玉折扇',price:150},{name:'香囊',price:50},{name:'玲珑玉佩',price:220},{name:'青瓷花瓶',price:180},{name:'漆木梳妆盒',price:200},{name:'银丝缠花',price:130},{name:'松烟墨锭',price:160},{name:'宣纸一沓',price:70},{name:'和田玉牌',price:500},{name:'醉仙酿',price:800},{name:'灵蜂蜜',price:120},{name:'千年雪莲',price:400},{name:'寒玉笛',price:350},{name:'如意结',price:90},{name:'青锋剑穗',price:140},{name:'霓裳羽衣',price:600},{name:'《山河图》',price:450}];
 
-/* ========== 佛门定义 ========== */
+/* ========== 佛门 ========== */
 const BUDDHIST_SECTS=['寒山寺','雷音寺'];
 function isBuddhist(sect){return BUDDHIST_SECTS.includes(sect)}
-/* 素菜（meat=false） */
 const VEGETARIAN_DISHES=RECIPE_DB.filter(r=>!r.meat).map(r=>r.name);
-/* 佛门礼品：不含酒、不含女子饰物等 */
 const BUDDHIST_GIFTS=['碧螺春茶','白玉折扇','香囊','松烟墨锭','宣纸一沓','如意结','寒玉笛','青瓷花瓶','和田玉牌'];
-/* 佛门法号词库 */
 const BUDDHIST_NAME_PREFIX=['了','慧','普','玄','悟','净','弘','妙','德','圆','智','法','真','寂','禅','明','菩','觉','如','空','无','本','道','通'];
 const BUDDHIST_NAME_SUFFIX=['尘','空','渡','机','能','法','音','明','通','深','海','心','镜','远','真','如','来','相','为','常','寂','灭','济','缘'];
 
@@ -384,11 +426,14 @@ const SKILL_CAST_DESC=['你凝气于剑，一式剑法破空而出——','你�
 function pickRandom(a){return a[Math.floor(Math.random()*a.length)]}
 
 /* ========== 玩家 ========== */
-function defaultPlayer(){return{name:{sur:'',given:'',dao:'',nickname:''},realmIndex:0,exp:0,hp:100,maxHp:100,mp:50,maxMp:50,atk:10,def:5,agility:10,dodge:5,crit:5,critDmg:150,cultivateBonus:0,cooking:0,gold:50,weapon:null,acc1:null,acc2:null,pet:null,bag:[],skills:[],relations:[],petEggs:[],day:1,shichenIndex:getRealShichenIndex(),newbiePackClaimed:false}}
+function defaultPlayer(){
+  const skillStock=initShopSkillStock();
+  return{name:{sur:'',given:'',dao:'',nickname:''},realmIndex:0,exp:0,hp:100,maxHp:100,mp:50,maxMp:50,atk:10,def:5,agility:10,dodge:5,crit:5,critDmg:150,cultivateBonus:0,cooking:0,gold:50,weapon:null,acc1:null,acc2:null,pet:null,bag:[],skills:[],relations:[],petEggs:[],day:1,shichenIndex:getRealShichenIndex(),newbiePackClaimed:false,shopXinfaStock:skillStock.xinfaStock,shopJianfaStock:skillStock.jianfaStock};
+}
 let player=null;let saveSlots=[];
 const AUTO_SLOT=0,MANUAL_SLOTS=6;
-const STORAGE_KEY='xiuxian_saves_v13',AUTO_KEY='xiuxian_auto_v13';
-const STORY_KEY='xiuxian_story_seen_v13',NAME_KEY='xiuxian_name_v13';
+const STORAGE_KEY='xiuxian_saves_v14',AUTO_KEY='xiuxian_auto_v14';
+const STORY_KEY='xiuxian_story_seen_v14',NAME_KEY='xiuxian_name_v14';
 
 /* ========== 工具 ========== */
 function getRealm(){return REALMS[Math.min(player.realmIndex,REALMS.length-1)]}
@@ -400,17 +445,11 @@ function getDao(){return(player&&player.name&&player.name.dao)||''}
 function getNickname(){return(player&&player.name&&player.name.nickname)||''}
 function getDisplayName(){const f=getFullName(),d=getDao();return d?`${f}（${d}）`:f}
 function getPlayerTitle(){return getDao()||getFullName()||'道友'}
-/* NPC称呼玩家：好感越高越亲切 */
-function getNpcCallName(npc){
-  const favor=npc.favor||0;
-  const nick=getNickname();
-  if(favor>=60&&nick)return nick;
-  if(favor>=30)return getDao()||getFullName()||'道友';
-  return '道友';
-}
+function getNpcCallName(npc){const favor=npc.favor||0;const nick=getNickname();if(favor>=60&&nick)return nick;if(favor>=30)return getDao()||getFullName()||'道友';return'道友'}
 function toast(msg,d=2000){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._timer);t._timer=setTimeout(()=>t.classList.remove('show'),d)}
 function log(msg,type=''){const p=document.getElementById('logPanel');const d=document.createElement('div');d.className='log-entry '+type;d.textContent=msg;p.appendChild(d);p.scrollTop=p.scrollHeight;while(p.children.length>120)p.removeChild(p.firstChild)}
 function calcPower(o){const atk=o.atk||0,def=o.def||0,mhp=o.maxHp||o.hp||1,agi=o.agility||10;return Math.floor(atk*3+def*2+mhp/5+agi*2)}
+function goldBadge(){return`<span class="gold-badge">灵石：${player.gold}</span>`}
 
 /* ========== UI ========== */
 function refreshUI(){if(!player)return;document.getElementById('topName').textContent=getDisplayName();document.getElementById('dayNum').textContent=player.day;document.getElementById('topRealm').textContent=getRealmName();document.getElementById('topExp').textContent=player.exp;document.getElementById('topHp').textContent=`${Math.max(0,player.hp)}/${player.maxHp}`;document.getElementById('topMp').textContent=`${Math.max(0,player.mp)}/${player.maxMp}`;document.getElementById('topGold').textContent=player.gold;updateTimeDisplay()}
@@ -426,7 +465,7 @@ function doCultivate(){if(player.realmIndex<REALMS.length-1&&player.exp>=getExpN
 function getBreakthroughRate(t){const target=REALMS[t];return target?(BREAKTHROUGH_RATES[target.name]??100):0}
 let selectedBtIds=[];
 function openBreakthrough(){selectedBtIds=[];renderBreakthrough()}
-function renderBreakthrough(){const nextIdx=player.realmIndex+1;if(nextIdx>=REALMS.length){toast('已至最高境界');return}const baseRate=getBreakthroughRate(nextIdx);let bonus=0;selectedBtIds.forEach(id=>{const it=player.bag.find(i=>i.id===id);if(it&&it.bonus)bonus+=it.bonus});const finalRate=Math.min(100,baseRate+bonus);const btItems=player.bag.filter(it=>it.type==='breakthrough');let html=`<div class="modal-title">冲 击 境 界</div><div class="bt-realms"><span class="from">${getRealmName()}</span><span class="arrow">→</span><span class="to">${getRealmName(nextIdx)}</span></div><div class="bt-rate-row"><span class="label">基础成功率</span><span class="value">${baseRate}%</span></div>`;if(bonus>0)html+=`<div class="bt-rate-row"><span class="label">丹药加成</span><span class="value" style="color:#4a7a4a;">+${bonus}%</span></div>`;html+=`<div class="bt-rate-row final"><span class="label">最终成功率</span><span class="value">${finalRate}%</span></div><div class="bt-items">`;if(btItems.length===0)html+=`<div style="color:#8b7355;font-size:12px;padding:10px;">暂无突破丹药</div>`;else btItems.forEach(it=>{const sel=selectedBtIds.includes(it.id)?'selected':'';html+=`<button class="bt-item ${sel}" onclick="toggleBtItem('${it.id}')">${it.name}<span style="color:#4a7a4a;margin-left:6px;">+${it.bonus}%</span></button>`});html+=`</div><div style="text-align:center;font-size:11px;color:#8b7355;margin-top:12px;">失败损失当前修为30%，丹药均消耗</div><button class="bt-submit" onclick="doBreakthrough(${finalRate})">冲 击</button><button class="modal-close" onclick="closeModal()">暂 缓</button>`;showModal(html)}
+function renderBreakthrough(){const nextIdx=player.realmIndex+1;if(nextIdx>=REALMS.length){toast('已至最高境界');return}const baseRate=getBreakthroughRate(nextIdx);let bonus=0;selectedBtIds.forEach(id=>{const it=player.bag.find(i=>i.id===id);if(it&&it.bonus)bonus+=it.bonus});const finalRate=Math.min(100,baseRate+bonus);const btItems=player.bag.filter(it=>it.type==='breakthrough');let html=`<div class="modal-title">冲 击 境 界</div><div style="text-align:center;margin-bottom:10px;">${goldBadge()}</div><div class="bt-realms"><span class="from">${getRealmName()}</span><span class="arrow">→</span><span class="to">${getRealmName(nextIdx)}</span></div><div class="bt-rate-row"><span class="label">基础成功率</span><span class="value">${baseRate}%</span></div>`;if(bonus>0)html+=`<div class="bt-rate-row"><span class="label">丹药加成</span><span class="value" style="color:#4a7a4a;">+${bonus}%</span></div>`;html+=`<div class="bt-rate-row final"><span class="label">最终成功率</span><span class="value">${finalRate}%</span></div><div class="bt-items">`;if(btItems.length===0)html+=`<div style="color:#8b7355;font-size:12px;padding:10px;">暂无突破丹药</div>`;else btItems.forEach(it=>{const sel=selectedBtIds.includes(it.id)?'selected':'';html+=`<button class="bt-item ${sel}" onclick="toggleBtItem('${it.id}')">${it.name}<span style="color:#4a7a4a;margin-left:6px;">+${it.bonus}%</span></button>`});html+=`</div><div style="text-align:center;font-size:11px;color:#8b7355;margin-top:12px;">失败损失当前修为30%，丹药均消耗</div><button class="bt-submit" onclick="doBreakthrough(${finalRate})">冲 击</button><button class="modal-close" onclick="closeModal()">暂 缓</button>`;showModal(html)}
 function toggleBtItem(id){const i=selectedBtIds.indexOf(id);if(i>=0)selectedBtIds.splice(i,1);else selectedBtIds.push(id);renderBreakthrough()}
 function doBreakthrough(rate){const nextIdx=player.realmIndex+1;selectedBtIds.forEach(id=>{const i=player.bag.findIndex(it=>it.id===id);if(i>=0)player.bag.splice(i,1)});selectedBtIds=[];if(Math.random()*100<rate){player.exp-=getExpNeeded();player.realmIndex=nextIdx;applyBreakthroughGrowth();log(`✦ 突破成功！境界提升至【${getRealmName()}】！`,'good');toast('突破成功！')}else{const loss=Math.floor(player.exp*.3);player.exp=Math.max(0,player.exp-loss);log(`✧ 突破失败……修为损失 ${loss} 点。`,'bad');toast('突破失败')}refreshUI();closeModal()}
 function applyBreakthroughGrowth(){const idx=player.realmIndex;player.maxHp+=20+idx*5;player.maxMp+=10+idx*3;player.atk+=3+Math.floor(idx*1.5);player.def+=2+Math.floor(idx*.8);player.agility+=1;const cur=REALMS[idx],prev=REALMS[idx-1];if(prev&&cur.name!==prev.name){player.dodge=Math.min(35,player.dodge+2);player.crit=Math.min(30,player.crit+1);player.critDmg+=5;player.agility+=2}player.hp=player.maxHp;player.mp=player.maxMp}
@@ -436,15 +475,36 @@ function doRest(){const s=SHICHEN[player.shichenIndex%12];let hpGain,mpGain;if([
 
 /* ========== 数量选择器 ========== */
 let qtyCallback=null;let qtyUnitPrice=0;let qtyMax=1;
-function showQuantityPicker(title,unitPrice,maxQty,cb,unit='个'){qtyCallback=cb;qtyUnitPrice=unitPrice;qtyMax=maxQty;let html=`<div class="modal-title">${title}</div><div style="text-align:center;font-size:13px;color:#8b7355;margin-bottom:14px;">单价 <b style="color:#a67c00;">${unitPrice}</b> 灵石 · 最多 <b>${maxQty}</b> ${unit}</div><div class="admin-row"><label>数量</label><input type="number" id="qtyInput" value="1" min="1" max="${maxQty}" oninput="updateQtyTotal()"><button onclick="setMaxQty()" style="padding:9px 14px;background:var(--paper-2);border:2px solid var(--wood-lt);color:var(--wood-dk);cursor:pointer;font-family:inherit;font-size:13px;">最 大</button></div><div style="text-align:center;font-size:13px;color:#8b7355;margin:14px 0;">合计：<b style="color:#c0392b;font-size:16px;" id="qtyTotal">${unitPrice}</b> 灵石</div><div class="confirm-buttons"><button class="btn-no" onclick="closeModal()">取 消</button><button class="btn-yes" onclick="confirmQuantity()">确 认</button></div>`;showModal(html)}
+function showQuantityPicker(title,unitPrice,maxQty,cb,unit='个'){qtyCallback=cb;qtyUnitPrice=unitPrice;qtyMax=maxQty;let html=`<div class="modal-title">${title}</div><div style="text-align:center;font-size:13px;color:#8b7355;margin-bottom:14px;">单价 <b style="color:#a67c00;">${unitPrice}</b> 灵石 · 最多 <b>${maxQty}</b> ${unit} · ${goldBadge()}</div><div class="admin-row"><label>数量</label><input type="number" id="qtyInput" value="1" min="1" max="${maxQty}" oninput="updateQtyTotal()"><button onclick="setMaxQty()" style="padding:9px 14px;background:var(--paper-2);border:2px solid var(--wood-lt);color:var(--wood-dk);cursor:pointer;font-family:inherit;font-size:13px;">最 大</button></div><div style="text-align:center;font-size:13px;color:#8b7355;margin:14px 0;">合计：<b style="color:#c0392b;font-size:16px;" id="qtyTotal">${unitPrice}</b> 灵石</div><div class="confirm-buttons"><button class="btn-no" onclick="closeModal()">取 消</button><button class="btn-yes" onclick="confirmQuantity()">确 认</button></div>`;showModal(html)}
 function updateQtyTotal(){const q=Math.max(1,Math.min(qtyMax,parseInt(document.getElementById('qtyInput').value)||1));document.getElementById('qtyTotal').textContent=q*qtyUnitPrice}
 function setMaxQty(){document.getElementById('qtyInput').value=qtyMax;updateQtyTotal()}
 function confirmQuantity(){const q=Math.max(1,Math.min(qtyMax,parseInt(document.getElementById('qtyInput').value)||1));if(player.gold<q*qtyUnitPrice){toast('灵石不足');return}qtyCallback(q)}
 
 /* ========== 宅邸 ========== */
 function openHome(){let html=`<div class="modal-title">宅 邸</div><div class="sub-menu cols-3"><button class="sub-option" onclick="openYard()"><span class="icon">🌿</span>院 子<span class="sub">练剑 · 炼丹</span></button><button class="sub-option" onclick="openCabin()"><span class="icon">🏠</span>小 屋<span class="sub">修炼 · 打坐</span></button><button class="sub-option" onclick="openKitchen()"><span class="icon">🍳</span>厨 房<span class="sub">做 菜</span></button></div><button class="modal-close" onclick="closeModal()">关 闭</button>`;showModal(html)}
-function openYard(){let html=`<div class="modal-title">院 子</div><div class="sub-menu"><button class="sub-option" onclick="yardSwordPractice()"><span class="icon">⚔</span>练 剑 法<span class="sub">一时辰 · 提升剑法</span></button><button class="sub-option" onclick="yardAlchemy()"><span class="icon">⚗</span>炼 丹<span class="sub">一时辰 · 消耗灵草</span></button></div><button class="modal-close" onclick="openHome()">返 回</button>`;showModal(html)}
-function yardSwordPractice(){const jf=player.skills.find(s=>s.type==='active');if(!jf){toast('尚未修习剑法');return}if(jf.level>=10){toast('剑法已至当前阶圆满');return}const cost=200*jf.level;if(player.gold<cost){toast('灵石不足');return}player.gold-=cost;jf.level++;log(`【练剑】「${jf.name}」提升至 ${jf.tier}阶${jf.level}级。`,'good');toast(`剑法升至 ${jf.level} 级`);advanceTime();refreshUI();openYard()}
+function openYard(){let html=`<div class="modal-title">院 子</div><div style="text-align:center;margin-bottom:10px;">${goldBadge()}</div><div class="sub-menu"><button class="sub-option" onclick="openSwordPractice()"><span class="icon">⚔</span>练 剑 法<span class="sub">一时辰 · 提升剑法</span></button><button class="sub-option" onclick="yardAlchemy()"><span class="icon">⚗</span>炼 丹<span class="sub">一时辰 · 消耗灵草</span></button></div><button class="modal-close" onclick="openHome()">返 回</button>`;showModal(html)}
+function openSwordPractice(){
+  const jianfas=player.skills.filter(s=>s.type==='active');
+  if(jianfas.length===0){toast('尚未修习剑法');return}
+  let html=`<div class="modal-title">练 剑 法</div><div style="text-align:center;margin-bottom:12px;">${goldBadge()}</div><div class="card-list">`;
+  let anyCanPractice=false;
+  jianfas.forEach(sk=>{
+    const cost=200*sk.level*(1+(sk.tier-1)*.5);
+    const isMax=sk.level>=10;
+    const canAfford=player.gold>=cost;
+    if(!isMax&&canAfford)anyCanPractice=true;
+    html+=`<div class="card">
+      <div class="card-title"><span>${sk.name}</span><span style="font-size:11px;color:${SKILL_QUALITY[sk.quality].color};">${SKILL_QUALITY[sk.quality].name}·${sk.tier}阶${sk.level}级</span></div>
+      <div class="card-desc">${getSkillEffectStr(sk)}</div>
+      <div class="card-actions">`;
+    if(isMax)html+=`<span style="font-size:12px;color:#a67c00;">已至圆满</span>`;
+    else html+=`<button ${canAfford?'':'disabled'} onclick="doYardPractice('${sk.id}')">修习（${cost} 灵石）${canAfford?'':' — 灵石不足'}</button>`;
+    html+=`</div></div>`;
+  });
+  html+=`</div><button class="modal-close" onclick="openYard()">返 回</button>`;
+  showModal(html);
+}
+function doYardPractice(skillId){const sk=player.skills.find(s=>s.id===skillId);if(!sk)return;if(sk.level>=10){toast('已至圆满');return}const cost=200*sk.level*(1+(sk.tier-1)*.5);if(player.gold<cost){toast('灵石不足');return}player.gold-=cost;sk.level++;log(`【练剑】「${sk.name}」升至 ${sk.tier}阶${sk.level}级。`,'good');toast(`${sk.name} 升至 ${sk.level} 级`);advanceTime();refreshUI();openSwordPractice()}
 function yardAlchemy(){const herbs=player.bag.filter(it=>it.type==='consume'&&it.name.includes('灵草'));if(herbs.length===0){toast('没有灵草可炼');return}const idx=player.bag.indexOf(herbs[0]);player.bag.splice(idx,1);const pills=['回春散','聚气散','回春丹','聚气丹'];const name=pickRandom(pills);const base=ITEM_DB[name];player.bag.push({...base,id:genId()});log(`【炼丹】炼成「${name}」。`,'good');toast(`炼成 ${name}`);advanceTime();refreshUI();openYard()}
 function openCabin(){let html=`<div class="modal-title">小 屋</div><div class="sub-menu cols-3"><button class="sub-option" onclick="closeModal();doCultivate();"><span class="icon">☯</span>修 炼<span class="sub">+修为</span></button><button class="sub-option" onclick="closeModal();doRest();"><span class="icon">🧘</span>打 坐<span class="sub">回气血</span></button><button class="sub-option" onclick="openSkills()"><span class="icon">📖</span>练 心 经<span class="sub">查看 · 升级</span></button></div><button class="modal-close" onclick="openHome()">返 回</button>`;showModal(html)}
 
@@ -468,12 +528,12 @@ function appendCombatLog(text){const el=document.getElementById('combatLogText')
 function setCombatButtonsEnabled(enabled){['btnAtk','btnSkl','btnDef','btnItm','btnFle'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!enabled})}
 function combatPlayerAttack(){if(!combatState.waitingForPlayer)return;combatState.waitingForPlayer=false;combatState.playerBar=0;setCombatButtonsEnabled(false);const pFill=document.getElementById('playerChargeFill');if(pFill)pFill.classList.remove('ready');const e=combatState.enemy;const desc=pickRandom(PLAYER_ATTACK_DESC);if(Math.random()*100<e.dodge){appendCombatLog(`${desc}${pickRandom(ENEMY_DODGE_DESC).replace('{n}',e.name)}`);updateCombatBars();return}const isCrit=Math.random()*100<player.crit;let dmg=Math.max(1,player.atk-e.def+Math.floor(Math.random()*6));if(isCrit)dmg=Math.floor(dmg*player.critDmg/100);e.hp=Math.max(0,e.hp-dmg);if(isCrit)appendCombatLog(`${desc}${pickRandom(PLAYER_CRIT_DESC)}对 ${e.name} 造成 ${dmg} 点暴击伤害！`);else appendCombatLog(`${desc}对 ${e.name} 造成 ${dmg} 点伤害。`);updateCombatBars();if(e.hp<=0)handleCombatWin()}
 function combatPlayerDefend(){if(!combatState.waitingForPlayer)return;combatState.waitingForPlayer=false;combatState.playerBar=0;combatState.defending=true;setCombatButtonsEnabled(false);const pFill=document.getElementById('playerChargeFill');if(pFill)pFill.classList.remove('ready');appendCombatLog('你凝神静气，摆出守势。');updateCombatBars()}
-function combatShowItems(){if(!combatState.waitingForPlayer)return;const items=player.bag.filter(it=>it.type==='consume'||it.type==='dish');let html='';if(items.length===0)html='<div style="text-align:center;color:#8b7355;padding:14px;">暂无可用物品</div>';else{const grouped={};items.forEach(it=>{if(!grouped[it.name])grouped[it.name]={item:it,count:1};else grouped[it.name].count++});for(const name in grouped){const g=grouped[name];const effect=g.item.heal?`气血+${g.item.heal}`:(g.item.mana?`灵力+${g.item.mana}`:'');html+=`<div class="item-entry"><div><div class="item-name">${name} <span style="color:#a67c00;font-size:12px;">×${g.count}</span></div><div class="item-desc">${effect}</div></div><div class="item-actions"><button onclick="combatUseItemByName('${name}')">使用</button></div></div>`}}document.getElementById('combatPickerTitle').textContent='选 择 物 品';document.getElementById('combatItemList').innerHTML=html;document.getElementById('combatItemPicker').style.display='block';document.getElementById('combatMainActions').style.display='none'}
+function combatShowItems(){if(!combatState.waitingForPlayer)return;const items=player.bag.filter(it=>it.type==='consume'||it.type==='dish');let html='';if(items.length===0)html='<div style="text-align:center;color:#8b7355;padding:14px;">暂无可用物品</div>';else{const grouped={};items.forEach(it=>{if(!grouped[it.name])grouped[it.name]={item:it,count:1};else grouped[it.name].count++});for(const name in grouped){const g=grouped[name];const effect=g.item.heal?`气血+${g.item.heal}`:(g.item.mana?`灵力+${g.item.mana}`:(g.item.exp?`修为+${g.item.exp}`:''));html+=`<div class="item-entry"><div><div class="item-name">${name} <span style="color:#a67c00;font-size:12px;">×${g.count}</span></div><div class="item-desc">${effect}</div></div><div class="item-actions"><button onclick="combatUseItemByName('${name}')">使用</button></div></div>`}}document.getElementById('combatPickerTitle').textContent='选 择 物 品';document.getElementById('combatItemList').innerHTML=html;document.getElementById('combatItemPicker').style.display='block';document.getElementById('combatMainActions').style.display='none'}
 function combatUseItemByName(name){const idx=player.bag.findIndex(it=>it.name===name&&(it.type==='consume'||it.type==='dish'));if(idx<0)return;combatUseItem(idx)}
 function combatShowSkills(){if(!combatState.waitingForPlayer)return;const skills=(player.skills||[]).filter(sk=>sk.type==='active');let html='';if(skills.length===0)html='<div style="text-align:center;color:#8b7355;padding:14px;">尚未修习主动功法</div>';else skills.forEach(sk=>{const mul=(sk.baseMul||1.8)+(sk.level-1)*(sk.perLevelMul||.2)+(sk.tier-1)*(sk.perTierMul||.4);const canUse=player.mp>=sk.mpCost;html+=`<div class="item-entry"><div><div class="item-name">${sk.name} <span style="color:#c0392b;font-size:11px;">${sk.tier}阶${sk.level}级</span></div><div class="item-desc">伤害×${mul.toFixed(1)} · 耗灵${sk.mpCost}</div></div><div class="item-actions"><button ${canUse?'':'disabled'} onclick="combatUseSkill('${sk.id}')" style="${canUse?'':'opacity:.4;'}">施展</button></div></div>`});document.getElementById('combatPickerTitle').textContent='选 择 功 法';document.getElementById('combatItemList').innerHTML=html;document.getElementById('combatItemPicker').style.display='block';document.getElementById('combatMainActions').style.display='none'}
 function combatUseSkill(skillId){if(!combatState.waitingForPlayer)return;const sk=player.skills.find(s=>s.id===skillId);if(!sk)return;if(player.mp<sk.mpCost){toast('灵力不足');return}player.mp-=sk.mpCost;const e=combatState.enemy;const mul=(sk.baseMul||1.8)+(sk.level-1)*(sk.perLevelMul||.2)+(sk.tier-1)*(sk.perTierMul||.4);const desc=pickRandom(SKILL_CAST_DESC);if(Math.random()*100<e.dodge){appendCombatLog(`${desc}${pickRandom(ENEMY_DODGE_DESC).replace('{n}',e.name)}`);combatHidePicker();finishPlayerTurn();return}let dmg=Math.max(1,Math.floor(player.atk*mul)-e.def+Math.floor(Math.random()*6));const isCrit=Math.random()*100<player.crit;if(isCrit)dmg=Math.floor(dmg*player.critDmg/100);e.hp=Math.max(0,e.hp-dmg);if(isCrit)appendCombatLog(`${desc}${pickRandom(PLAYER_CRIT_DESC)}对 ${e.name} 造成 ${dmg} 点暴击伤害！`);else appendCombatLog(`${desc}对 ${e.name} 造成 ${dmg} 点伤害。`);combatHidePicker();updateCombatBars();refreshUI();if(e.hp<=0){handleCombatWin();return}finishPlayerTurn()}
 function combatHidePicker(){const picker=document.getElementById('combatItemPicker'),actions=document.getElementById('combatMainActions');if(picker)picker.style.display='none';if(actions)actions.style.display='grid'}
-function combatUseItem(idx){if(!combatState.waitingForPlayer)return;const item=player.bag[idx];if(!item)return;let txt=`你服下 ${item.name}，`;if(item.heal){const b=player.hp;player.hp=Math.min(player.maxHp,player.hp+item.heal);txt+=`气血+${player.hp-b}。`}if(item.mana){const b=player.mp;player.mp=Math.min(player.maxMp,player.mp+item.mana);txt+=`灵力+${player.mp-b}。`}appendCombatLog(txt);player.bag.splice(idx,1);combatHidePicker();updateCombatBars();refreshUI();finishPlayerTurn()}
+function combatUseItem(idx){if(!combatState.waitingForPlayer)return;const item=player.bag[idx];if(!item)return;let txt=`你服下 ${item.name}，`;if(item.heal){const b=player.hp;player.hp=Math.min(player.maxHp,player.hp+item.heal);txt+=`气血+${player.hp-b}。`}if(item.mana){const b=player.mp;player.mp=Math.min(player.maxMp,player.mp+item.mana);txt+=`灵力+${player.mp-b}。`}if(item.exp){player.exp+=item.exp;txt+=`修为+${item.exp}。`}appendCombatLog(txt);player.bag.splice(idx,1);combatHidePicker();updateCombatBars();refreshUI();finishPlayerTurn()}
 function finishPlayerTurn(){combatState.waitingForPlayer=false;combatState.playerBar=0;setCombatButtonsEnabled(false);const pFill=document.getElementById('playerChargeFill');if(pFill)pFill.classList.remove('ready')}
 function combatPlayerFlee(){if(!combatState.waitingForPlayer)return;const e=combatState.enemy;const pP=calcPower(player),eP=calcPower(e),ratio=pP/eP;const chance=Math.max(5,Math.min(95,50*ratio));appendCombatLog(`你评估双方实力……（战力比 ${ratio.toFixed(2)}，逃跑成功率 ${chance.toFixed(0)}%）`);if(Math.random()*100<chance){appendCombatLog('你转身便走，成功脱离战斗！');combatState.active=false;clearInterval(combatState.interval);setCombatButtonsEnabled(false);log('【历练】你成功脱离战斗。','info');advanceTime();refreshUI();const ret=combatState.returnTo;setTimeout(()=>{if(ret&&ret.type==='secret')openSecretTier(ret.tier);else closeModal()},800)}else{appendCombatLog(`可惜 ${e.name} 死死缠住，未能脱身！`);combatState.waitingForPlayer=false;combatState.playerBar=0;combatState.enemyBar=100;setCombatButtonsEnabled(false);const pFill=document.getElementById('playerChargeFill');if(pFill)pFill.classList.remove('ready')}}
 function doEnemyTurn(){const e=combatState.enemy;if(!e||e.hp<=0)return;const desc=pickRandom(ENEMY_ATTACK_DESC).replace('{n}',e.name);if(Math.random()*100<player.dodge){appendCombatLog(`${desc}${pickRandom(PLAYER_DODGE_DESC)}`);return}let dmg=Math.max(1,e.atk-player.def+Math.floor(Math.random()*5));if(combatState.defending){dmg=Math.floor(dmg*.4);combatState.defending=false;appendCombatLog(`${desc}你稳守如山，仅受 ${dmg} 点伤害。`)}else appendCombatLog(`${desc}你受 ${dmg} 点伤害。`);player.hp=Math.max(0,player.hp-dmg);updateCombatBars();refreshUI();if(player.hp<=0)handleCombatLose()}
@@ -481,182 +541,56 @@ function handleCombatWin(){const e=combatState.enemy;appendCombatLog(`✦ ${e.na
 function handleCombatLose(){appendCombatLog('✧ 你伤重倒地，勉强逃离……');player.hp=1;combatState.active=false;clearInterval(combatState.interval);setCombatButtonsEnabled(false);log('【历练】你不敌对手，重伤逃离。','bad');refreshUI();advanceTime();const reward={exp:0,gold:0,items:[],defeat:true,enemyName:combatState.enemy?combatState.enemy.name:'对手'};setTimeout(()=>{showCombatReward(reward)},1300)}
 function showCombatReward(r){let html=`<div class="modal-title">${r.defeat?'败 走 之 局':'战 利 品'}</div><div class="reward-list">`;if(r.defeat){html+=`<div class="reward-header" style="color:#8b7355;">败 于 ${r.enemyName}</div><div style="text-align:center;color:#8b7355;padding:20px;font-size:13px;">你重伤逃离，未有所获……<br>（气血仅余 1 点，请尽快打坐恢复）</div>`}else{html+=`<div class="reward-header">✦ 战 斗 胜 利 ✦</div><div class="reward-item"><span class="rlbl">修 为</span><span class="rval">+${r.exp}</span></div><div class="reward-item"><span class="rlbl">灵 石</span><span class="rval">+${r.gold}</span></div>`;if(r.items.length>0)r.items.forEach(it=>{html+=`<div class="reward-item"><span class="rlbl">物 品</span><span class="rval loot">${it}</span></div>`});else html+=`<div class="reward-item" style="opacity:.5;"><span class="rlbl">物 品</span><span class="rval" style="color:#8b7355;font-size:13px;">无掉落</span></div>`}html+=`</div><button class="modal-close" onclick="closeModal()">确 认</button>`;showModal(html)}
 
-/* ========== 游历（动态生成NPC，佛门特殊处理） ========== */
+/* ========== 游历 ========== */
 function openRoam(){let html=`<div class="modal-title">游 历 江 湖</div><div style="text-align:center;font-size:13px;color:#8b7355;margin-bottom:14px;line-height:1.9;">游历需耗费 <b style="color:#c0392b;">三个时辰</b>，途中机缘难料，<br>或遇道友、或得奇遇、或只是看遍山水……</div><div class="confirm-buttons"><button class="btn-no" onclick="openTravel()">再 想 想</button><button class="btn-yes" onclick="doRoam()">出 发</button></div>`;showModal(html)}
-
 function generateRandomNpc(){
-  const pR = player.realmIndex;
-  const offsetPool = [0,0,0,0, 1,1,1, -1,-1,-1, 2,2, -2,-2, 3, -3];
-  const offset = pickRandom(offsetPool);
-  const rIdx = Math.max(0, Math.min(REALMS.length-1, pR + offset));
-
+  const pR=player.realmIndex;
+  const offsetPool=[0,0,0,0,1,1,1,-1,-1,-1,2,2,-2,-2,3,-3];
+  const offset=pickRandom(offsetPool);
+  const rIdx=Math.max(0,Math.min(REALMS.length-1,pR+offset));
   let sectPool;
-  if(rIdx <= 5)        sectPool = [...SECTS_LOW, ...SECTS_LOW, ...SECTS_LOW, ...SECTS_MID];
-  else if(rIdx <= 12)  sectPool = [...SECTS_LOW, ...SECTS_LOW, ...SECTS_MID, ...SECTS_MID];
-  else if(rIdx <= 20)  sectPool = [...SECTS_MID, ...SECTS_MID, ...SECTS_MID, ...SECTS_TOP];
-  else if(rIdx <= 30)  sectPool = [...SECTS_MID, ...SECTS_TOP, ...SECTS_TOP];
-  else                 sectPool = [...SECTS_TOP, ...SECTS_TOP, ...SECTS_TOP];
-
-  const isRogue = Math.random() < 0.3;
-  let sectName, position;
-  if(isRogue){
-    sectName = '散修';
-    position = pickRandom(['散修','游方道人','江湖散人','独行客','云游客','隐修']);
-  }else{
-    const sect = pickRandom(sectPool);
-    sectName = sect.name;
-    let posPool = sect.positions;
-    if(rIdx <= 8) posPool = sect.positions.slice(-2);
-    else if(rIdx <= 15) posPool = sect.positions.slice(-3);
-    position = pickRandom(posPool);
-  }
-
-  const isBuddhistSect = isBuddhist(sectName);
-
-  // 生成姓名
+  if(rIdx<=5)sectPool=[...SECTS_LOW,...SECTS_LOW,...SECTS_LOW,...SECTS_MID];
+  else if(rIdx<=12)sectPool=[...SECTS_LOW,...SECTS_LOW,...SECTS_MID,...SECTS_MID];
+  else if(rIdx<=20)sectPool=[...SECTS_MID,...SECTS_MID,...SECTS_MID,...SECTS_TOP];
+  else if(rIdx<=30)sectPool=[...SECTS_MID,...SECTS_TOP,...SECTS_TOP];
+  else sectPool=[...SECTS_TOP,...SECTS_TOP,...SECTS_TOP];
+  const isRogue=Math.random()<.3;
+  let sectName,position;
+  if(isRogue){sectName='散修';position=pickRandom(['散修','游方道人','江湖散人','独行客','云游客','隐修'])}
+  else{const sect=pickRandom(sectPool);sectName=sect.name;let posPool=sect.positions;if(rIdx<=8)posPool=sect.positions.slice(-2);else if(rIdx<=15)posPool=sect.positions.slice(-3);position=pickRandom(posPool)}
+  const isBuddhistSect=isBuddhist(sectName);
   let name;
-  if(isBuddhistSect){
-    // 佛门：法号形式，如"了尘"、"慧空"
-    name = pickRandom(BUDDHIST_NAME_PREFIX) + pickRandom(BUDDHIST_NAME_SUFFIX);
-  }else{
-    const surnames = ['李','王','张','刘','陈','赵','周','吴','孙','杨','沈','白','云','萧','林','洛','江','陆','苏','楚','燕','秦','宋','顾','欧阳','慕容','南宫','上官','独孤','东方'];
-    const givenNames = ['青云','逍遥','天行','无痕','清霜','墨白','流风','惊鸿','落月','星河','若虚','明远','一鸣','怀瑾','如玉','含章','羽衣','长风','孤鸿','子墨','灵犀','紫芝','抱朴','守拙','归真','无咎','含光','承影','斩月','拂霜'];
-    name = pickRandom(surnames) + pickRandom(givenNames);
-  }
-
-  // 道号
+  if(isBuddhistSect){name=pickRandom(BUDDHIST_NAME_PREFIX)+pickRandom(BUDDHIST_NAME_SUFFIX)}
+  else{const surnames=['李','王','张','刘','陈','赵','周','吴','孙','杨','沈','白','云','萧','林','洛','江','陆','苏','楚','燕','秦','宋','顾','欧阳','慕容','南宫','上官','独孤','东方'];const givenNames=['青云','逍遥','天行','无痕','清霜','墨白','流风','惊鸿','落月','星河','若虚','明远','一鸣','怀瑾','如玉','含章','羽衣','长风','孤鸿','子墨','灵犀','紫芝','抱朴','守拙','归真','无咎','含光','承影','斩月','拂霜'];name=pickRandom(surnames)+pickRandom(givenNames)}
   let dao;
-  if(isBuddhistSect){
-    const buddhistTitles = ['禅师','法师','尊者','大师','长老','上人','首座','住持','方丈'];
-    dao = name + pickRandom(buddhistTitles);
-  }else{
-    const daoTitles = ['剑客','真人','散人','上人','道人','仙子','居士','老祖','尊者','剑尊','剑仙','真人','散仙','丹师','器师','符师'];
-    dao = name.slice(-2) + pickRandom(daoTitles);
-  }
-
-  // 性别：佛门强制男性
-  let gender = isBuddhistSect ? '男' : (Math.random() < 0.5 ? '男' : '女');
-
-   // 妖修（佛门不可能是妖修）
-  const yaoChance = rIdx >= 10 ? 0.18 : 0.08;
-  const isYao = !isBuddhistSect && Math.random() < yaoChance;
-  if(isYao){
-    sectName = '万妖谷';
-    // 根据修为匹配妖族职位，避免出现"凡人妖王"
-    if(rIdx <= 8)       position = '妖兵';
-    else if(rIdx <= 18) position = pickRandom(['妖兵','妖将']);
-    else if(rIdx <= 28) position = pickRandom(['妖将','妖王']);
-    else                position = '妖王';
-  }
-
-  // 喜好：佛门素菜 + 素雅礼品
-  let favDish, favItem;
-  if(isBuddhistSect || isYao){
-    favDish = pickRandom(VEGETARIAN_DISHES);
-    favItem = pickRandom(BUDDHIST_GIFTS);
-  }else{
-    favDish = pickRandom(RECIPE_DB).name;
-    favItem = pickRandom(GIFT_DB).name;
-  }
-
-  const base = (rIdx + 1) * 18;
-  const atk = base + Math.floor(Math.random()*20);
-  const def = Math.floor(base/2) + Math.floor(Math.random()*10);
-  const maxHp = base * 5 + Math.floor(Math.random()*150);
-  const agility = 10 + Math.floor(Math.random()*10);
-  const dodge = 5 + Math.floor(Math.random()*12);
-  const crit = 5 + Math.floor(Math.random()*8);
-
+  if(isBuddhistSect){const buddhistTitles=['禅师','法师','尊者','大师','长老','上人','首座','住持','方丈'];dao=name+pickRandom(buddhistTitles)}
+  else{const daoTitles=['剑客','真人','散人','上人','道人','仙子','居士','老祖','尊者','剑尊','剑仙','真人','散仙','丹师','器师','符师'];dao=name.slice(-2)+pickRandom(daoTitles)}
+  let gender=isBuddhistSect?'男':(Math.random()<.5?'男':'女');
+  const yaoChance=rIdx>=10?.18:.08;
+  const isYao=!isBuddhistSect&&Math.random()<yaoChance;
+  if(isYao){sectName='万妖谷';if(rIdx<=8)position='妖兵';else if(rIdx<=18)position=pickRandom(['妖兵','妖将']);else if(rIdx<=28)position=pickRandom(['妖将','妖王']);else position='妖王'}
+  let favDish,favItem;
+  if(isBuddhistSect||isYao){favDish=pickRandom(VEGETARIAN_DISHES);favItem=pickRandom(BUDDHIST_GIFTS)}
+  else{favDish=pickRandom(RECIPE_DB).name;favItem=pickRandom(GIFT_DB).name}
+  const base=(rIdx+1)*18;
+  const atk=base+Math.floor(Math.random()*20);
+  const def=Math.floor(base/2)+Math.floor(Math.random()*10);
+  const maxHp=base*5+Math.floor(Math.random()*150);
+  const agility=10+Math.floor(Math.random()*10);
+  const dodge=5+Math.floor(Math.random()*12);
+  const crit=5+Math.floor(Math.random()*8);
   let weapon;
-  if(isBuddhistSect){
-    weapon = pickRandom([
-      {name:'禅杖',atk:15,desc:'佛门法器。'},
-      {name:'念珠',atk:10,desc:'一百零八颗。'},
-      {name:'降魔杵',atk:20,desc:'佛门降魔之物。'},
-    ]);
-  }else{
-    const weaponPool = [
-      {name:'铁剑',atk:8,desc:'普普通通。'},
-      {name:'青锋剑',atk:15,desc:'随身佩剑。'},
-      {name:'月华剑',atk:20,desc:'月华凝练。'},
-      {name:'寒霜剑',atk:28,desc:'剑身泛寒。'},
-      {name:'流光剑',atk:35,desc:'流光溢彩。'},
-    ];
-    weapon = rIdx >= 20 ? pickRandom(weaponPool.slice(-2)) : pickRandom(weaponPool.slice(0,3));
-  }
-
-  return {
-    id: genId(), name, dao, gender,
-    sect: sectName, position,
-    desc: `${sectName}的${position}。`,
-    favDish, favItem, favor: 10,
-    isYao, isBuddhist: isBuddhistSect, realmIndex: rIdx,
-    atk, def, maxHp, agility, dodge, crit, critDmg: 150,
-    weapon,
-    acc1: Math.random()<0.5 ? {name:'狼牙护符',desc:'野狼獠牙。',atk:3,hp:10} : null,
-    acc2: Math.random()<0.4 ? {name:'灵猴玉佩',desc:'轻盈灵动。',mp:10,dodge:3} : null,
-    pet: Math.random()<0.3 ? {name: PET_SPECIES[pickRandom(Object.keys(PET_SPECIES))].name, desc:'贴身灵宠。'} : null,
-  };
+  if(isBuddhistSect){weapon=pickRandom([{name:'禅杖',atk:15,desc:'佛门法器。'},{name:'念珠',atk:10,def:3,desc:'一百零八颗。'},{name:'降魔杵',atk:20,def:5,desc:'佛门降魔之物。'}])}
+  else{const weaponPool=[{name:'铁剑',atk:8,desc:'普普通通。'},{name:'青锋剑',atk:15,desc:'随身佩剑。'},{name:'月华剑',atk:20,desc:'月华凝练。'},{name:'寒霜剑',atk:28,desc:'剑身泛寒。'},{name:'流光剑',atk:35,desc:'流光溢彩。'}];weapon=rIdx>=20?pickRandom(weaponPool.slice(-2)):pickRandom(weaponPool.slice(0,3))}
+  return{id:genId(),name,dao,gender,sect:sectName,position,desc:`${sectName}的${position}。`,favDish,favItem,favor:10,isYao,isBuddhist:isBuddhistSect,realmIndex:rIdx,atk,def,maxHp,agility,dodge,crit,critDmg:150,weapon,acc1:Math.random()<.5?{name:'狼牙护符',desc:'野狼獠牙。',atk:3,hp:10}:null,acc2:Math.random()<.4?{name:'灵猴玉佩',desc:'轻盈灵动。',mp:10,dodge:3}:null,pet:Math.random()<.3?{name:PET_SPECIES[pickRandom(Object.keys(PET_SPECIES))].name,desc:'贴身灵宠。'}:null}
 }
-
-function doRoam(){
-  advanceTime(3);
-  const roll=Math.random()*100;
-  if(roll<40){
-    const sub=Math.random();
-    if(sub<.4){
-      const stats=[{k:'atk',n:'攻击',v:1},{k:'def',n:'防御',v:1},{k:'agility',n:'敏捷',v:1},{k:'maxHp',n:'气血上限',v:5},{k:'maxMp',n:'灵力上限',v:3},{k:'dodge',n:'闪避',v:1},{k:'crit',n:'暴击',v:1}];
-      const st=pickRandom(stats);player[st.k]+=st.v;
-      if(st.k==='maxHp')player.hp=Math.min(player.maxHp,player.hp+st.v);
-      if(st.k==='maxMp')player.mp=Math.min(player.maxMp,player.mp+st.v);
-      log(`【游历】你登高望远，${st.n} +${st.v}。`,'good')
-    }else if(sub<.75){
-      const items=['粗制灵草','解毒丹','回春散','聚气散'];
-      const name=pickRandom(items);const base=ITEM_DB[name];
-      if(base){player.bag.push({...base,id:genId()});log(`【游历】你在山野间采到「${name}」。`,'good')}
-    }else{
-      const dish=pickRandom(RECIPE_DB);
-      player.bag.push(dishToItem(dish));
-      log(`【游历】你在小馆尝到「${dish.name}」。`,'good')
-    }
-    toast('游历平安')
-  }else if(roll<85){
-    let npcData = null;
-    let tries = 0;
-    while(tries < 5){
-      npcData = generateRandomNpc();
-      if(!player.relations.find(r => r.name === npcData.name)) break;
-      tries++;
-    }
-    setTimeout(()=>showNpcEncounter(npcData),200);
-    return;
-  }else if(roll<92){
-    player.gold+=500;
-    log(`【奇遇】你误入洞府，得500灵石！`,'loot');
-    toast('洞府奇遇！')
-  }else if(roll<97){
-    const petTypes=Object.keys(PET_SPECIES);
-    const t=pickRandom(petTypes);
-    const pet=PET_SPECIES[t];
-    const q=pet.quality;
-    player.petEggs.push({id:genId(),type:'petEgg',petType:t,name:`${pet.name}蛋`,desc:`可孵化出${pet.name}。品质：${PET_QUALITY_INFO[q].name}`,icon:pet.icon,quality:q,gender:Math.random()<.5?'公':'母',remainingHours:pet.hatchTime,readyToHatch:false,sellPrice:Math.floor(pet.hatchTime*2)});
-    log(`【奇遇】你拾获「${pet.name}蛋」（${PET_QUALITY_INFO[q].name}）！`,'loot');
-    toast('获得灵兽蛋！')
-  }else{
-    player.gold+=300;
-    player.bag.push({...ITEM_DB['青云剑'],id:genId()});
-    log(`【奇遇】拾得「青云剑」与300灵石！`,'loot');
-    toast('获得宝物！')
-  }
-  refreshUI()
-}
-
+function doRoam(){advanceTime(3);const roll=Math.random()*100;if(roll<40){const sub=Math.random();if(sub<.4){const stats=[{k:'atk',n:'攻击',v:1},{k:'def',n:'防御',v:1},{k:'agility',n:'敏捷',v:1},{k:'maxHp',n:'气血上限',v:5},{k:'maxMp',n:'灵力上限',v:3},{k:'dodge',n:'闪避',v:1},{k:'crit',n:'暴击',v:1}];const st=pickRandom(stats);player[st.k]+=st.v;if(st.k==='maxHp')player.hp=Math.min(player.maxHp,player.hp+st.v);if(st.k==='maxMp')player.mp=Math.min(player.maxMp,player.mp+st.v);log(`【游历】你登高望远，${st.n} +${st.v}。`,'good')}else if(sub<.75){const items=['粗制灵草','解毒丹','回春散','聚气散'];const name=pickRandom(items);const base=ITEM_DB[name];if(base){player.bag.push({...base,id:genId()});log(`【游历】你在山野间采到「${name}」。`,'good')}}else{const dish=pickRandom(RECIPE_DB);player.bag.push(dishToItem(dish));log(`【游历】你在小馆尝到「${dish.name}」。`,'good')}toast('游历平安')}else if(roll<85){let npcData=null;let tries=0;while(tries<5){npcData=generateRandomNpc();if(!player.relations.find(r=>r.name===npcData.name))break;tries++}setTimeout(()=>showNpcEncounter(npcData),200);return}else if(roll<92){player.gold+=500;log(`【奇遇】你误入洞府，得500灵石！`,'loot');toast('洞府奇遇！')}else if(roll<97){const petTypes=Object.keys(PET_SPECIES);const t=pickRandom(petTypes);const pet=PET_SPECIES[t];const q=pet.quality;player.petEggs.push({id:genId(),type:'petEgg',petType:t,name:`${pet.name}蛋`,desc:`可孵化出${pet.name}。品质：${PET_QUALITY_INFO[q].name}`,icon:pet.icon,quality:q,gender:Math.random()<.5?'公':'母',remainingHours:pet.hatchTime,readyToHatch:false,sellPrice:Math.floor(pet.hatchTime*2)});log(`【奇遇】你拾获「${pet.name}蛋」（${PET_QUALITY_INFO[q].name}）！`,'loot');toast('获得灵兽蛋！')}else{player.gold+=300;player.bag.push({...ITEM_DB['青云剑'],id:genId()});log(`【奇遇】拾得「青云剑」与300灵石！`,'loot');toast('获得宝物！')}refreshUI()}
 function showNpcEncounter(npc){let html=`<div class="modal-title">相 遇</div><div class="card"><div class="card-title"><span>${npc.name}</span><span style="font-size:12px;color:#a67c00;">${npc.dao}</span></div><div class="card-desc">${npc.desc}${npc.isYao?' · <b style="color:#6b4a80;">妖修</b>':''}${npc.isBuddhist?' · <b style="color:#a67c00;">佛修</b>':''} · ${getRealmName(npc.realmIndex)}</div><div style="font-size:11px;color:#8b7355;text-align:center;padding:8px;background:rgba(168,135,92,.06);">是否将此人录入因缘录？</div><div class="card-actions" style="justify-content:center;margin-top:12px;"><button onclick='acceptNpc(${JSON.stringify(npc).replace(/'/g,"&#39;")})'>结 交</button><button class="ghost" onclick="closeModal()">婉 拒</button></div></div>`;showModal(html)}
 function acceptNpc(npc){player.relations.push(npc);log(`【因缘录】你与 ${npc.name}（${npc.dao}）结交。`,'good');toast(`结交 ${npc.name}`);closeModal();refreshUI()}
 
 /* ========== 酒楼 ========== */
 let restaurantTab='buy';
-function openRestaurant(){let html=`<div class="modal-title">酒 楼</div><div class="shop-tabs"><button class="shop-tab ${restaurantTab==='buy'?'active':''}" onclick="restaurantTab='buy';openRestaurant()">购买食材</button><button class="shop-tab ${restaurantTab==='eat'?'active':''}" onclick="restaurantTab='eat';openRestaurant()">品尝菜肴</button></div>`;if(restaurantTab==='buy'){html+=`<div style="text-align:center;font-size:13px;color:#8b7355;margin-bottom:12px;">身怀灵石：<b style="color:#a67c00;">${player.gold}</b></div><div class="card-list">`;for(const[name,price]of Object.entries(INGREDIENT_DB)){html+=`<div class="card"><div class="card-title"><span>${name}</span><span style="font-size:12px;color:#a67c00;">${price} 灵石</span></div><div class="card-actions"><button ${player.gold>=price?'':'disabled'} onclick="buyIngredient('${name}',${price})">购 买</button></div></div>`}html+=`</div>`}else{html+=`<div class="card-list">`;RECIPE_DB.forEach((r,i)=>{const price=Math.max(3,Math.floor(r.dishPrice*.8));html+=`<div class="card"><div class="card-title"><span>${r.name}</span><span style="font-size:12px;color:#a67c00;">${price} 灵石</span></div><div class="card-desc">${r.desc} · ${r.effect==='hp'?'回血':'回灵'} +${r.value}</div><div class="card-actions"><button ${player.gold>=price?'':'disabled'} onclick="chooseDishMode(${i},${price})">品 尝 / 打 包</button></div></div>`});html+=`</div>`}html+=`<button class="modal-close" onclick="openTravel()">返 回</button>`;showModal(html)}
+function openRestaurant(){let html=`<div class="modal-title">酒 楼</div><div style="text-align:center;margin-bottom:10px;">${goldBadge()}</div><div class="shop-tabs"><button class="shop-tab ${restaurantTab==='buy'?'active':''}" onclick="restaurantTab='buy';openRestaurant()">购买食材</button><button class="shop-tab ${restaurantTab==='eat'?'active':''}" onclick="restaurantTab='eat';openRestaurant()">品尝菜肴</button></div>`;if(restaurantTab==='buy'){html+=`<div class="card-list">`;for(const[name,price]of Object.entries(INGREDIENT_DB)){html+=`<div class="card"><div class="card-title"><span>${name}</span><span style="font-size:12px;color:#a67c00;">${price} 灵石</span></div><div class="card-actions"><button ${player.gold>=price?'':'disabled'} onclick="buyIngredient('${name}',${price})">购 买</button></div></div>`}html+=`</div>`}else{html+=`<div class="card-list">`;RECIPE_DB.forEach((r,i)=>{const price=Math.max(3,Math.floor(r.dishPrice*.8));html+=`<div class="card"><div class="card-title"><span>${r.name}</span><span style="font-size:12px;color:#a67c00;">${price} 灵石</span></div><div class="card-desc">${r.desc} · ${r.effect==='hp'?'回血':'回灵'} +${r.value}</div><div class="card-actions"><button ${player.gold>=price?'':'disabled'} onclick="chooseDishMode(${i},${price})">品 尝 / 打 包</button></div></div>`});html+=`</div>`}html+=`<button class="modal-close" onclick="openTravel()">返 回</button>`;showModal(html)}
 function buyIngredient(name,price){const maxQty=Math.floor(player.gold/price);if(maxQty<=0){toast('灵石不足');return}showQuantityPicker(`购买 ${name}`,price,maxQty,(qty)=>{player.gold-=qty*price;for(let i=0;i<qty;i++)player.bag.push({id:genId(),type:'ingredient',name,desc:'烹饪食材。',sellPrice:Math.floor(price*.3)});toast(`购得 ${name}×${qty}`);refreshUI();openRestaurant()})}
 function chooseDishMode(i,price){const r=RECIPE_DB[i];let html=`<div class="modal-title">${r.name}</div><div style="text-align:center;font-size:13px;color:#8b7355;margin-bottom:14px;">${r.desc} · ${r.effect==='hp'?'回血':'回灵'} +${r.value}</div><div class="confirm-buttons"><button class="btn-no" onclick="closeModal()">取 消</button><button class="btn-yes" onclick="pickDishQuantity(${i},${price},'eat')">当 场 品 尝</button><button class="btn-yes" style="background:linear-gradient(160deg,#6b4a2b,#3a2a18);" onclick="pickDishQuantity(${i},${price},'pack')">打 包 带 走</button></div>`;showModal(html)}
 function pickDishQuantity(i,price,mode){const r=RECIPE_DB[i];const maxQty=Math.floor(player.gold/price);if(maxQty<=0){toast('灵石不足');return}showQuantityPicker((mode==='eat'?'品尝 ':'打包 ')+r.name,price,maxQty,(qty)=>{player.gold-=qty*price;if(mode==='eat'){let totalHp=0,totalMp=0;for(let k=0;k<qty;k++){if(r.effect==='hp'){const b=player.hp;player.hp=Math.min(player.maxHp,player.hp+r.value);totalHp+=player.hp-b}else{const b=player.mp;player.mp=Math.min(player.maxMp,player.mp+r.value);totalMp+=player.mp-b}}log(`【酒楼】品尝「${r.name}」×${qty}，${r.effect==='hp'?`气血 +${totalHp}`:`灵力 +${totalMp}`}。`,'good')}else{for(let k=0;k<qty;k++)player.bag.push({id:genId(),type:'dish',name:r.name,desc:r.desc,heal:r.effect==='hp'?r.value:0,mana:r.effect==='mp'?r.value:0,sellPrice:Math.floor(price*.5)});log(`【酒楼】打包「${r.name}」×${qty}。`,'info')}toast('完成');refreshUI();openRestaurant()})}
@@ -664,14 +598,129 @@ function pickDishQuantity(i,price,mode){const r=RECIPE_DB[i];const maxQty=Math.f
 /* ========== 商店 ========== */
 let currentShopTab='weapon';
 function openShop(){renderShop()}
-function renderShop(){const tabs=[{key:'weapon',label:'兵器'},{key:'acc',label:'饰品'},{key:'consume',label:'丹药'},{key:'breakthrough',label:'突破'},{key:'xinjing',label:'心经'},{key:'jianfa',label:'剑法'},{key:'gift',label:'礼品'},{key:'tool',label:'杂项'}];let html=`<div class="modal-title">坊 市 · 商 店</div><div style="text-align:center;font-size:13px;color:#8b7355;margin-bottom:14px;">身怀灵石：<span style="color:#a67c00;font-size:16px;font-weight:bold;">${player.gold}</span></div><div class="shop-tabs">`;tabs.forEach(t=>{html+=`<button class="shop-tab ${currentShopTab===t.key?'active':''}" onclick="switchShopTab('${t.key}')">${t.label}</button>`});html+=`</div>`;let items=[];if(currentShopTab==='weapon'){items=[{name:'普通铁剑',price:60,attrs:'攻击+5'},{name:'精铁长剑',price:200,attrs:'攻击+12'},{name:'青云剑',price:500,attrs:'攻击+22 · 暴击+2%'},{name:'玄铁重剑',price:1200,attrs:'攻击+38 · 防御+5'}]}else if(currentShopTab==='acc'){items=[{name:'狼牙护符',price:100,attrs:'攻击+3 · 气血+10'},{name:'灵猴玉佩',price:130,attrs:'灵力+10 · 闪避+3%'},{name:'护心铜镜',price:250,attrs:'防御+6 · 气血+25'},{name:'疾风铃',price:220,attrs:'闪避+5% · 敏捷+2'},{name:'幽魂精魄',price:380,attrs:'攻击+6 · 暴击+3%'}]}else if(currentShopTab==='consume'){items=[{name:'粗制灵草',price:12,attrs:'恢复灵力+15'},{name:'解毒丹',price:15,attrs:'恢复气血+30'},{name:'回春散',price:40,attrs:'恢复气血+80'},{name:'聚气散',price:45,attrs:'恢复灵力+60'},{name:'回春丹',price:100,attrs:'恢复气血+200'},{name:'聚气丹',price:110,attrs:'恢复灵力+150'}]}else if(currentShopTab==='breakthrough'){items=[{name:'破障丹',price:180,attrs:'突破+5%'},{name:'凝神丹',price:450,attrs:'突破+10%'},{name:'天机丹',price:1000,attrs:'突破+20%'}]}else if(currentShopTab==='xinjing'){items=[{name:'随机心法秘籍（凡品）',price:600,attrs:'凡品心法秘籍'},{name:'随机心法秘籍（中品）',price:1500,attrs:'中品心法秘籍'},{name:'随机心法秘籍（上品）',price:3000,attrs:'上品心法秘籍'},{name:'随机心法秘籍（极品）',price:8000,attrs:'极品心法秘籍'}]}else if(currentShopTab==='jianfa'){items=[{name:'随机剑法秘籍（凡品）',price:600,attrs:'凡品剑法秘籍'},{name:'随机剑法秘籍（中品）',price:1500,attrs:'中品剑法秘籍'},{name:'随机剑法秘籍（上品）',price:3000,attrs:'上品剑法秘籍'},{name:'随机剑法秘籍（极品）',price:8000,attrs:'极品剑法秘籍'}]}else if(currentShopTab==='gift'){items=GIFT_DB.map(g=>({name:g.name,price:g.price,attrs:'赠礼'}))}else if(currentShopTab==='tool'){items=[{name:'易名符',price:5000,attrs:'更改姓名与道号'},{name:'化形丹',price:3000,attrs:'辅助灵兽化形'}]}html+=`<div class="card-list">`;items.forEach(it=>{const canAfford=player.gold>=it.price;html+=`<div class="shop-entry"><div class="info"><div class="name">${it.name}</div><div class="attrs">${it.attrs}</div></div><div class="right"><div class="price ${canAfford?'':'cant'}">${it.price} 灵石</div><button class="buy-btn" ${canAfford?'':'disabled'} onclick="buyItem('${it.name}',${it.price})">购 买</button></div></div>`});html+=`</div><button class="modal-close" onclick="openTravel()">返 回</button>`;showModal(html)}
+function renderShop(){
+  const tabs=[{key:'weapon',label:'兵器'},{key:'buddhist',label:'佛器'},{key:'acc',label:'饰品'},{key:'consume',label:'丹药'},{key:'breakthrough',label:'突破'},{key:'xinjing',label:'心经'},{key:'jianfa',label:'剑法'},{key:'gift',label:'礼品'},{key:'tool',label:'杂项'}];
+  let html=`<div class="modal-title">坊 市 · 商 店</div><div style="text-align:center;margin-bottom:12px;">${goldBadge()}</div><div class="shop-tabs">`;
+  tabs.forEach(t=>{html+=`<button class="shop-tab ${currentShopTab===t.key?'active':''}" onclick="switchShopTab('${t.key}')">${t.label}</button>`});
+  html+=`</div>`;
+  let items=[];
+  if(currentShopTab==='weapon'){
+    items=[{name:'普通铁剑',price:60,attrs:'攻击+5'},{name:'精铁长剑',price:200,attrs:'攻击+12'},{name:'青云剑',price:500,attrs:'攻击+22 · 暴击+2%'},{name:'玄铁重剑',price:1200,attrs:'攻击+38 · 防御+5'}];
+  }else if(currentShopTab==='buddhist'){
+    items=[
+      {name:'禅杖',price:180,attrs:'攻击+15 · 佛修专用'},
+      {name:'念珠',price:150,attrs:'攻击+10 · 防御+3 · 佛修专用'},
+      {name:'降魔杵',price:600,attrs:'攻击+28 · 防御+5 · 佛修专用'},
+      {name:'金钵',price:450,attrs:'攻击+22 · 暴击+3% · 佛修专用'},
+      {name:'菩提念珠',price:1500,attrs:'攻击+35 · 防御+8 · 暴击+5% · 佛修专用'},
+    ];
+  }else if(currentShopTab==='acc'){
+    items=[{name:'狼牙护符',price:100,attrs:'攻击+3 · 气血+10'},{name:'灵猴玉佩',price:130,attrs:'灵力+10 · 闪避+3%'},{name:'护心铜镜',price:250,attrs:'防御+6 · 气血+25'},{name:'疾风铃',price:220,attrs:'闪避+5% · 敏捷+2'},{name:'幽魂精魄',price:380,attrs:'攻击+6 · 暴击+3%'}];
+  }else if(currentShopTab==='consume'){
+    items=[
+      {name:'粗制灵草',price:12,attrs:'恢复灵力+15'},
+      {name:'解毒丹',price:15,attrs:'恢复气血+30'},
+      {name:'回春散',price:40,attrs:'恢复气血+80'},
+      {name:'聚气散',price:45,attrs:'恢复灵力+60'},
+      {name:'回春丹',price:100,attrs:'恢复气血+200'},
+      {name:'聚气丹',price:110,attrs:'恢复灵力+150'},
+      {name:'小还丹',price:80,attrs:'修为+100'},
+      {name:'大还丹',price:400,attrs:'修为+500'},
+      {name:'聚灵丹',price:1500,attrs:'修为+2000'},
+      {name:'悟道丹',price:7000,attrs:'修为+10000'},
+    ];
+  }else if(currentShopTab==='breakthrough'){
+    items=[{name:'破障丹',price:180,attrs:'突破+5%'},{name:'凝神丹',price:450,attrs:'突破+10%'},{name:'天机丹',price:1000,attrs:'突破+20%'}];
+  }else if(currentShopTab==='gift'){
+    items=GIFT_DB.map(g=>({name:g.name,price:g.price,attrs:'赠礼'}));
+  }else if(currentShopTab==='tool'){
+    items=[{name:'易名符',price:5000,attrs:'更改姓名与道号'},{name:'化形丹',price:3000,attrs:'辅助灵兽化形'}];
+  }
+
+  // 心经/剑法显示库存
+  if(currentShopTab==='xinjing'||currentShopTab==='jianfa'){
+    const stock=currentShopTab==='xinjing'?player.shopXinfaStock:player.shopJianfaStock;
+    if(stock.length===0){
+      html+=`<div style="text-align:center;padding:40px 20px;color:#8b7355;font-size:14px;">此间功法已售罄，改日再来。</div>`;
+      html+=`<button class="modal-close" onclick="openTravel()">返 回</button>`;
+      showModal(html);return;
+    }
+    // 按品阶分组显示
+    const byQuality={common:[],mid:[],high:[],supreme:[]};
+    stock.forEach((sk,idx)=>{byQuality[sk.quality].push({sk,idx})});
+    html+=`<div class="card-list">`;
+    ['common','mid','high','supreme'].forEach(q=>{
+      if(byQuality[q].length===0)return;
+      const qi=SKILL_QUALITY[q];
+      html+=`<div style="font-size:12px;color:${qi.color};letter-spacing:3px;padding:8px 0 4px;border-bottom:1px solid var(--paper-dk);">━ ${qi.name} ${currentShopTab==='xinjing'?'心法':'剑法'} ━</div>`;
+      byQuality[q].forEach(({sk,idx})=>{
+        const canAfford=player.gold>=sk.price;
+        const typeStr=sk.type==='passive'?'被动':'主动';
+        const mulStr=sk.type==='active'?` ×${(sk.baseMul||1.8).toFixed(2)}`:'';
+        html+=`<div class="shop-entry">
+          <div class="info"><div class="name">${sk.name} <span style="font-size:10px;color:${qi.color};border:1px solid ${qi.color};padding:0 4px;">${qi.name}</span> <span style="font-size:10px;color:#8b7355;">${typeStr}</span></div>
+          <div class="attrs">${sk.type==='passive'?`攻击+${sk.baseAtk} · 防御+${sk.baseDef}`:`伤害倍率${mulStr} · 耗灵 ${sk.mpCost}`}</div></div>
+          <div class="right"><div class="price ${canAfford?'':'cant'}">${sk.price} 灵石</div>
+          <button class="buy-btn" ${canAfford?'':'disabled'} onclick="buyShopSkill('${currentShopTab}',${idx})">购 买</button></div>
+        </div>`;
+      });
+    });
+    html+=`</div>`;
+    html+=`<button class="modal-close" onclick="openTravel()">返 回</button>`;
+    showModal(html);return;
+  }
+
+  html+=`<div class="card-list">`;
+  items.forEach(it=>{
+    const canAfford=player.gold>=it.price;
+    html+=`<div class="shop-entry"><div class="info"><div class="name">${it.name}</div><div class="attrs">${it.attrs}</div></div><div class="right"><div class="price ${canAfford?'':'cant'}">${it.price} 灵石</div><button class="buy-btn" ${canAfford?'':'disabled'} onclick="buyItem('${it.name}',${it.price})">购 买</button></div></div>`;
+  });
+  html+=`</div><button class="modal-close" onclick="openTravel()">返 回</button>`;
+  showModal(html);
+}
 function switchShopTab(k){currentShopTab=k;renderShop()}
-function buyItem(name,price){const maxQty=Math.floor(player.gold/price);if(maxQty<=0){toast('灵石不足');return}showQuantityPicker(`购买 ${name}`,price,maxQty,(qty)=>{if(name.startsWith('随机心法秘籍')){const quality=name.includes('凡品')?'common':name.includes('中品')?'mid':name.includes('上品')?'high':'supreme';for(let i=0;i<qty;i++){const sk=createXinfa(1,quality);player.bag.push({id:genId(),type:'skillbook',skillId:sk.id,bookTier:1,skillData:sk,name:`${sk.name}·秘（${SKILL_QUALITY[quality].name}）`,desc:`修习或提升「${sk.name}」`,price,sellPrice:Math.floor(price*.5)})}}else if(name.startsWith('随机剑法秘籍')){const quality=name.includes('凡品')?'common':name.includes('中品')?'mid':name.includes('上品')?'high':'supreme';for(let i=0;i<qty;i++){const sk=createJianfa(1,quality);player.bag.push({id:genId(),type:'skillbook',skillId:sk.id,bookTier:1,skillData:sk,name:`${sk.name}·秘（${SKILL_QUALITY[quality].name}）`,desc:`修习或提升「${sk.name}」`,price,sellPrice:Math.floor(price*.5)})}}else{let base=ITEM_DB[name];if(!base){const g=GIFT_DB.find(x=>x.name===name);if(g)base={type:'gift',name:g.name,desc:'赠礼',price:g.price}}if(!base){toast('物品不存在');return}for(let i=0;i<qty;i++)player.bag.push({...base,id:genId(),price,sellPrice:Math.floor(price*.5)})}player.gold-=qty*price;log(`【商店】花费 ${qty*price} 灵石，购得 ${name}×${qty}。`,'info');toast(`购得 ${name}×${qty}`);refreshUI();renderShop()})}
+function buyShopSkill(tab,idx){
+  const stock=tab==='xinjing'?player.shopXinfaStock:player.shopJianfaStock;
+  const sk=stock[idx];
+  if(!sk){toast('物品不存在');return;}
+  if(player.gold<sk.price){toast('灵石不足');return;}
+  const maxQty=Math.floor(player.gold/sk.price);
+  showQuantityPicker(`购买 ${sk.name}`,sk.price,Math.min(maxQty,stock.filter(s=>s.name===sk.name).length),(qty)=>{
+    // 购买 qty 本同名秘籍
+    let bought=0;
+    for(let k=stock.length-1;k>=0 && bought<qty;k--){
+      if(stock[k].name===sk.name&&stock[k].quality===sk.quality){
+        player.bag.push({id:genId(),type:'skillbook',skillId:stock[k].id,bookTier:1,skillData:stock[k],name:`${stock[k].name}·秘（${SKILL_QUALITY[stock[k].quality].name}）`,desc:`修习或提升「${stock[k].name}」`,price:stock[k].price,sellPrice:Math.floor(stock[k].price*.5)});
+        stock.splice(k,1);
+        bought++;
+      }
+    }
+    player.gold-=bought*sk.price;
+    log(`【商店】花费 ${bought*sk.price} 灵石，购得 ${sk.name}秘籍×${bought}。`,'info');
+    toast(`购得 ${sk.name}×${bought}`);
+    refreshUI();renderShop();
+  },'本');
+}
+function buyItem(name,price){
+  const maxQty=Math.floor(player.gold/price);
+  if(maxQty<=0){toast('灵石不足');return;}
+  showQuantityPicker(`购买 ${name}`,price,maxQty,(qty)=>{
+    let base=ITEM_DB[name];
+    if(!base){const g=GIFT_DB.find(x=>x.name===name);if(g)base={type:'gift',name:g.name,desc:'赠礼',price:g.price};}
+    if(!base){toast('物品不存在');return;}
+    for(let i=0;i<qty;i++)player.bag.push({...base,id:genId(),price,sellPrice:Math.floor(price*.5)});
+    player.gold-=qty*price;
+    log(`【商店】花费 ${qty*price} 灵石，购得 ${name}×${qty}。`,'info');
+    toast(`购得 ${name}×${qty}`);
+    refreshUI();renderShop();
+  });
+}
 
 /* ========== 背包 ========== */
 function getSellPrice(item){if(item.sellPrice)return item.sellPrice;if(item.price)return Math.floor(item.price*.5);let val=5;if(item.atk)val+=item.atk*3;if(item.def)val+=item.def*2;if(item.hp)val+=item.hp;if(item.mp)val+=item.mp;return Math.max(1,Math.floor(val*.5))}
 function openBag(){
-  let html=`<div class="modal-title">芥 子 袋</div><div class="section-label">当 前 装 备</div><div class="item-list">`;
+  let html=`<div class="modal-title">芥 子 袋</div><div style="text-align:center;margin-bottom:10px;">${goldBadge()}</div>`;
+  html+=`<div class="section-label">当 前 装 备</div><div class="item-list">`;
   const eqList=[{slot:'weapon',label:'武器',item:player.weapon},{slot:'acc1',label:'饰品一',item:player.acc1},{slot:'acc2',label:'饰品二',item:player.acc2},{slot:'pet',label:'灵兽',item:player.pet}];
   let hasEq=false;eqList.forEach(eq=>{if(eq.item){hasEq=true;const attrStr=buildAttrString(eq.item);html+=`<div class="item-entry"><div><div class="item-name">${eq.label}：${eq.item.icon||''} ${eq.item.name}</div><div class="item-desc">${attrStr||eq.item.desc||''}</div></div><div class="item-actions"><button onclick="unequip('${eq.slot}')">卸下</button>${eq.slot==='pet'?`<button onclick="viewPetDetail()">详情</button>`:''}</div></div>`}});
   if(!hasEq)html+=`<div style="font-size:12px;color:#8b7355;padding:10px;text-align:center;">暂未装备</div>`;html+=`</div>`;
@@ -682,7 +731,7 @@ function openBag(){
   if(player.bag.length===0)html+=`<div style="font-size:12px;color:#8b7355;padding:10px;text-align:center;">空空如也</div>`;
   else{for(const key in grouped){const g=grouped[key];const item=g.item;const count=g.count;const firstIdx=g.indices[0];
     let btn='';
-    if(item.type==='weapon'||item.type==='acc'||item.type==='pet'){btn=`<button onclick="equipItem(${firstIdx})">装备</button>`}
+    if(item.type==='weapon'||item.type==='acc'||item.type==='pet'){if(item.canEquip===false){btn=`<span style="font-size:11px;color:#a67c00;">（不能装备）</span>`}else{btn=`<button onclick="equipItem(${firstIdx})">装备</button>`}}
     else if(item.type==='consume'||item.type==='dish'){btn=`<button onclick="useItemByGroup('${item.name}')">使用</button>`}
     else if(item.type==='breakthrough'){btn=`<button onclick="closeModal();openBreakthrough();">突破用</button>`}
     else if(item.type==='rename'){btn=`<button onclick="useRenameItem(${firstIdx})">使用</button>`}
@@ -694,9 +743,9 @@ function openBag(){
   html+=`</div><button class="modal-close" onclick="closeModal()">关 闭</button>`;showModal(html)}
 function sellItemGroup(name,type){const indices=[];player.bag.forEach((it,i)=>{if(it.name===name&&(it.type||'')===type)indices.push(i)});if(indices.length===0)return;const price=getSellPrice(player.bag[indices[0]]);const total=price*indices.length;player.gold+=total;for(let i=indices.length-1;i>=0;i--)player.bag.splice(indices[i],1);log(`【出售】卖出 ${name}×${indices.length}，得 ${total} 灵石。`,'info');toast(`+${total} 灵石`);refreshUI();openBag()}
 function dropItemGroup(name,type){if(!confirm(`确定丢弃所有「${name}」？`))return;for(let i=player.bag.length-1;i>=0;i--){if(player.bag[i].name===name&&(player.bag[i].type||'')===type)player.bag.splice(i,1)}log(`【丢弃】${name}。`,'info');openBag()}
-function useItemByGroup(name){const indices=[];player.bag.forEach((it,i)=>{if(it.name===name&&(it.type==='consume'||it.type==='dish'))indices.push(i)});if(indices.length===0)return;const item=player.bag[indices[0]];showQuantityPicker(`使用 ${name}`,0,indices.length,(qty)=>{let totalHeal=0,totalMana=0;for(let k=0;k<qty;k++){if(item.heal){const b=player.hp;player.hp=Math.min(player.maxHp,player.hp+item.heal);totalHeal+=player.hp-b}if(item.mana){const b=player.mp;player.mp=Math.min(player.maxMp,player.mp+item.mana);totalMana+=player.mp-b}}for(let k=0;k<qty;k++){const idx=player.bag.findIndex(it=>it.name===name&&(it.type==='consume'||it.type==='dish'));if(idx>=0)player.bag.splice(idx,1)}log(`【使用】${name}×${qty}，${totalHeal>0?`气血+${totalHeal} `:''}${totalMana>0?`灵力+${totalMana}`:''}。`,'good');refreshUI();openBag()},'份')}
-function buildAttrString(item){const parts=[];if(item.atk)parts.push('攻+'+item.atk);if(item.def)parts.push('防+'+item.def);if(item.hp)parts.push('血+'+item.hp);if(item.mp)parts.push('灵+'+item.mp);if(item.dodge)parts.push('闪+'+item.dodge+'%');if(item.crit)parts.push('暴+'+item.crit+'%');if(item.agility)parts.push('敏+'+item.agility);if(item.heal)parts.push('回血'+item.heal);if(item.mana)parts.push('回灵'+item.mana);if(item.bonus)parts.push('突破+'+item.bonus+'%');return parts.join(' · ')}
-function equipItem(index){const item=player.bag[index];if(!item)return;const addStats=(it)=>{player.atk+=it.atk||0;player.def+=it.def||0;player.maxHp+=it.hp||0;player.maxMp+=it.mp||0;player.dodge=Math.min(60,player.dodge+(it.dodge||0));player.crit=Math.min(60,player.crit+(it.crit||0));player.agility=Math.min(60,player.agility+(it.agility||0));if(it.stat==='atk')player.atk+=it.value||0;if(it.stat==='def')player.def+=it.value||0;if(it.stat==='hp')player.maxHp+=it.value||0;if(it.stat==='dodge')player.dodge+=it.value||0;if(it.stat==='crit'){player.crit+=it.value||0;if(it.critDmg)player.critDmg+=it.critDmg}if(it.stat==='cultivate')player.cultivateBonus=(player.cultivateBonus||0)+(it.value||0);if(it.stat==='agility')player.agility=Math.min(60,player.agility+(it.value||0))};const removeStats=(it)=>{player.atk-=it.atk||0;player.def-=it.def||0;player.maxHp-=it.hp||0;player.maxMp-=it.mp||0;player.dodge=Math.max(0,player.dodge-(it.dodge||0));player.crit=Math.max(0,player.crit-(it.crit||0));player.agility=Math.max(1,player.agility-(it.agility||0));if(it.stat==='atk')player.atk-=it.value||0;if(it.stat==='def')player.def-=it.value||0;if(it.stat==='hp')player.maxHp-=it.value||0;if(it.stat==='dodge')player.dodge=Math.max(0,player.dodge-(it.value||0));if(it.stat==='crit'){player.crit=Math.max(0,player.crit-(it.value||0));if(it.critDmg)player.critDmg-=it.critDmg}if(it.stat==='cultivate')player.cultivateBonus=Math.max(0,(player.cultivateBonus||0)-(it.value||0));if(it.stat==='agility')player.agility=Math.max(1,player.agility-(it.value||0))};if(item.type==='weapon'){if(player.weapon){removeStats(player.weapon);player.bag.push(player.weapon)}player.weapon=item}else if(item.type==='acc'){if(!player.acc1)player.acc1=item;else if(!player.acc2)player.acc2=item;else{removeStats(player.acc2);player.bag.push(player.acc2);player.acc2=item}}else if(item.type==='pet'){if(player.pet)player.bag.push(player.pet);player.pet=item}addStats(item);player.bag.splice(index,1);player.hp=Math.min(player.hp,player.maxHp);player.mp=Math.min(player.mp,player.maxMp);log(`【装备】装备了 ${item.name}。`,'info');refreshUI();openBag()}
+function useItemByGroup(name){const indices=[];player.bag.forEach((it,i)=>{if(it.name===name&&(it.type==='consume'||it.type==='dish'))indices.push(i)});if(indices.length===0)return;const item=player.bag[indices[0]];showQuantityPicker(`使用 ${name}`,0,indices.length,(qty)=>{let totalHeal=0,totalMana=0,totalExp=0;for(let k=0;k<qty;k++){if(item.heal){const b=player.hp;player.hp=Math.min(player.maxHp,player.hp+item.heal);totalHeal+=player.hp-b}if(item.mana){const b=player.mp;player.mp=Math.min(player.maxMp,player.mp+item.mana);totalMana+=player.mp-b}if(item.exp){player.exp+=item.exp;totalExp+=item.exp}}for(let k=0;k<qty;k++){const idx=player.bag.findIndex(it=>it.name===name&&(it.type==='consume'||it.type==='dish'));if(idx>=0)player.bag.splice(idx,1)}log(`【使用】${name}×${qty}，${totalHeal>0?`气血+${totalHeal} `:''}${totalMana>0?`灵力+${totalMana} `:''}${totalExp>0?`修为+${totalExp}`:''}。`,'good');refreshUI();openBag()},'份')}
+function buildAttrString(item){const parts=[];if(item.atk)parts.push('攻+'+item.atk);if(item.def)parts.push('防+'+item.def);if(item.hp)parts.push('血+'+item.hp);if(item.mp)parts.push('灵+'+item.mp);if(item.dodge)parts.push('闪+'+item.dodge+'%');if(item.crit)parts.push('暴+'+item.crit+'%');if(item.agility)parts.push('敏+'+item.agility);if(item.heal)parts.push('回血'+item.heal);if(item.mana)parts.push('回灵'+item.mana);if(item.exp)parts.push('修为+'+item.exp);if(item.bonus)parts.push('突破+'+item.bonus+'%');return parts.join(' · ')}
+function equipItem(index){const item=player.bag[index];if(!item)return;if(item.canEquip===false){toast('此物你不宜使用');return}const addStats=(it)=>{player.atk+=it.atk||0;player.def+=it.def||0;player.maxHp+=it.hp||0;player.maxMp+=it.mp||0;player.dodge=Math.min(60,player.dodge+(it.dodge||0));player.crit=Math.min(60,player.crit+(it.crit||0));player.agility=Math.min(60,player.agility+(it.agility||0));if(it.stat==='atk')player.atk+=it.value||0;if(it.stat==='def')player.def+=it.value||0;if(it.stat==='hp')player.maxHp+=it.value||0;if(it.stat==='dodge')player.dodge+=it.value||0;if(it.stat==='crit'){player.crit+=it.value||0;if(it.critDmg)player.critDmg+=it.critDmg}if(it.stat==='cultivate')player.cultivateBonus=(player.cultivateBonus||0)+(it.value||0);if(it.stat==='agility')player.agility=Math.min(60,player.agility+(it.value||0))};const removeStats=(it)=>{player.atk-=it.atk||0;player.def-=it.def||0;player.maxHp-=it.hp||0;player.maxMp-=it.mp||0;player.dodge=Math.max(0,player.dodge-(it.dodge||0));player.crit=Math.max(0,player.crit-(it.crit||0));player.agility=Math.max(1,player.agility-(it.agility||0));if(it.stat==='atk')player.atk-=it.value||0;if(it.stat==='def')player.def-=it.value||0;if(it.stat==='hp')player.maxHp-=it.value||0;if(it.stat==='dodge')player.dodge=Math.max(0,player.dodge-(it.value||0));if(it.stat==='crit'){player.crit=Math.max(0,player.crit-(it.value||0));if(it.critDmg)player.critDmg-=it.critDmg}if(it.stat==='cultivate')player.cultivateBonus=Math.max(0,(player.cultivateBonus||0)-(it.value||0));if(it.stat==='agility')player.agility=Math.max(1,player.agility-(it.value||0))};if(item.type==='weapon'){if(player.weapon){removeStats(player.weapon);player.bag.push(player.weapon)}player.weapon=item}else if(item.type==='acc'){if(!player.acc1)player.acc1=item;else if(!player.acc2)player.acc2=item;else{removeStats(player.acc2);player.bag.push(player.acc2);player.acc2=item}}else if(item.type==='pet'){if(player.pet)player.bag.push(player.pet);player.pet=item}addStats(item);player.bag.splice(index,1);player.hp=Math.min(player.hp,player.maxHp);player.mp=Math.min(player.mp,player.maxMp);log(`【装备】装备了 ${item.name}。`,'info');refreshUI();openBag()}
 function unequip(slot){const item=player[slot];if(!item)return;player.atk-=item.atk||0;player.def-=item.def||0;player.maxHp-=item.hp||0;player.maxMp-=item.mp||0;player.dodge=Math.max(0,player.dodge-(item.dodge||0));player.crit=Math.max(0,player.crit-(item.crit||0));player.agility=Math.max(1,player.agility-(item.agility||0));if(item.stat==='atk')player.atk-=item.value||0;if(item.stat==='def')player.def-=item.value||0;if(item.stat==='hp')player.maxHp-=item.value||0;if(item.stat==='dodge')player.dodge=Math.max(0,player.dodge-(item.value||0));if(item.stat==='crit'){player.crit=Math.max(0,player.crit-(item.value||0));if(item.critDmg)player.critDmg-=item.critDmg}if(item.stat==='cultivate')player.cultivateBonus=Math.max(0,(player.cultivateBonus||0)-(item.value||0));if(item.stat==='agility')player.agility=Math.max(1,player.agility-(item.value||0));player.bag.push(item);player[slot]=null;player.hp=Math.min(player.hp,player.maxHp);player.mp=Math.min(player.mp,player.maxMp);refreshUI();openBag()}
 function useRenameItem(index){const item=player.bag[index];if(!item||item.type!=='rename')return;player.bag.splice(index,1);openRenameModal()}
 function openRenameModal(){const cur=player.name||{sur:'',given:'',dao:'',nickname:''};let html=`<div class="modal-title">易 名 改 姓</div><div class="name-fields"><div class="name-field"><label>姓</label><input type="text" id="rnSur" maxlength="2" value="${cur.sur||''}"></div><div class="name-field"><label>名</label><input type="text" id="rnGiven" maxlength="4" value="${cur.given||''}"></div><div class="name-field"><label>道号</label><input type="text" id="rnDao" maxlength="6" value="${cur.dao||''}"></div><div class="name-field"><label>小名</label><input type="text" id="rnNick" maxlength="4" value="${cur.nickname||''}"></div></div><div class="name-preview"><div class="lbl">道 号 预 览</div><div class="val" id="rnPreview">${getDisplayName()}</div></div><div class="confirm-buttons"><button class="btn-no" onclick="closeModal()">取 消</button><button class="btn-yes" onclick="confirmRename()">确 认</button></div>`;showModal(html)}
@@ -722,21 +771,103 @@ function viewNpcDetail(i){const r=player.relations[i];if(!r)return;let html=`<di
 function revertPet(i){const r=player.relations[i];if(!r||!r.fromPet){toast('该道友不是灵兽化形');return}if(player.pet){toast('灵兽栏已有灵兽');return}if(!confirm(`让 ${r.name} 重新变回兽体？`))return;const petData=r.petData||{};petData.name=r.name;petData.dao=r.dao;petData.id=genId();petData.type='pet';player.pet=petData;player.relations.splice(i,1);log(`【化兽】${r.name}恢复兽体，回到灵兽栏。`,'info');toast('已恢复兽体');openRelationships()}
 function visitNpc(i){const r=player.relations[i];r.favor=(r.favor||0)+3;const callName=getNpcCallName(r);log(`【因缘录】你拜访了 ${r.name}，他/她称你为「${callName}」，好感 +3。`,'good');toast(`拜访 ${r.name}`);advanceTime();refreshUI();openRelationships()}
 function sparNpc(i){const r=player.relations[i];const gain=Math.max(5,Math.floor(calcPower(player)/8+Math.random()*10));player.exp+=gain;r.favor=(r.favor||0)+1;const callName=getNpcCallName(r);log(`【切磋】与 ${r.name} 交手，他/她称你为「${callName}」，修为 +${gain}，好感 +1。`,'good');toast(`切磋 +${gain}修为`);advanceTime();refreshUI();openRelationships()}
-function giftNpc(i){const r=player.relations[i];const gifts=player.bag.filter(it=>it.type==='gift'||it.type==='dish');if(gifts.length===0){toast('没有可赠送的礼物');return}let html=`<div class="modal-title">送 礼 给 ${r.name}</div><div style="font-size:12px;color:#8b7355;text-align:center;margin-bottom:12px;">喜好：${r.favDish||'—'} · ${r.favItem||'—'}</div><div class="item-list">`;gifts.forEach(g=>{const idx=player.bag.indexOf(g);const isFav=g.name===r.favDish||g.name===r.favItem;html+=`<div class="item-entry"><div><div class="item-name">${g.name} ${isFav?'<span style="color:#c0392b;font-size:11px;">（喜好）</span>':''}</div></div><div class="item-actions"><button onclick="giveGift(${i},${idx})">赠 送</button></div></div>`});html+=`</div><button class="modal-close" onclick="openRelationships()">返 回</button>`;showModal(html)}
-function giveGift(npcIdx,bagIdx){const r=player.relations[npcIdx];const g=player.bag[bagIdx];if(!g)return;const isFav=g.name===r.favDish||g.name===r.favItem;const add=isFav?15:5;r.favor=(r.favor||0)+add;player.bag.splice(bagIdx,1);const callName=getNpcCallName(r);log(`【送礼】你赠予 ${r.name}「${g.name}」，他/她称你为「${callName}」，好感 +${add}。`,'good');toast(`好感 +${add}`);refreshUI();openRelationships()}
+function giftNpc(i){
+  const r=player.relations[i];
+  // 可赠送：背包内任何物品（除了skillbook等消耗类），灵兽蛋单独列出
+  const giftable=player.bag.filter(it=>['gift','dish','weapon','acc','consume','ingredient','petEgg'].includes(it.type));
+  if(giftable.length===0&&player.petEggs.length===0){toast('没有可赠送的礼物');return}
+  let html=`<div class="modal-title">送 礼 给 ${r.name}</div><div style="font-size:12px;color:#8b7355;text-align:center;margin-bottom:12px;">喜好：${r.favDish||'—'} · ${r.favItem||'—'}</div><div class="item-list">`;
+  // 已装备的灵兽也可赠送？不，太复杂，跳过
+  // 背包装备
+  if(giftable.length>0){
+    const grouped={};
+    giftable.forEach((g,i)=>{const key=g.name+'|'+(g.type||'');if(!grouped[key])grouped[key]={item:g,count:1,indices:[i]};else{grouped[key].count++;grouped[key].indices.push(i)}});
+    for(const key in grouped){
+      const g=grouped[key];const item=g.item;
+      const isFav=item.name===r.favDish||item.name===r.favItem;
+      const idx=g.indices[0];
+      html+=`<div class="item-entry"><div><div class="item-name">${item.name}${g.count>1?` <span style="color:#a67c00;">×${g.count}</span>`:''} ${isFav?'<span style="color:#c0392b;font-size:11px;">（喜好）</span>':''}</div><div class="item-desc">${item.desc||''}</div></div><div class="item-actions"><button onclick="giveGift(${i},${idx})">赠 送</button></div></div>`;
+    }
+  }
+  // 灵兽蛋
+  if(player.petEggs.length>0){
+    html+=`<div style="font-size:12px;color:#8b7355;margin:10px 0 6px;border-left:3px solid var(--wood-lt);padding-left:8px;">灵兽蛋</div>`;
+    player.petEggs.forEach((eg,i)=>{
+      const qInfo=PET_QUALITY_INFO[eg.quality||'common'];
+      const isFav=eg.name===r.favItem;
+      html+=`<div class="item-entry"><div><div class="item-name">${eg.icon||'🥚'} ${eg.name} <span style="color:${qInfo.color};font-size:11px;">[${qInfo.name}]</span> ${eg.gender==='公'?'♂':'♀'} ${isFav?'<span style="color:#c0392b;font-size:11px;">（喜好）</span>':''}</div><div class="item-desc">${eg.desc}</div></div><div class="item-actions"><button onclick="givePetEgg(${i},${i})">赠 送</button></div></div>`;
+    });
+  }
+  html+=`</div><button class="modal-close" onclick="openRelationships()">返 回</button>`;
+  showModal(html);
+}
+function giveGift(npcIdx,bagIdx){
+  const r=player.relations[npcIdx];
+  const g=player.bag[bagIdx];if(!g)return;
+  const isFav=g.name===r.favDish||g.name===r.favItem;
+  const add=isFav?15:5;
+  r.favor=(r.favor||0)+add;
+  // NPC立刻使用礼物
+  let useMsg='';
+  if(g.type==='weapon'){
+    const myAtk=r.weapon?r.weapon.atk||0:0;
+    const newAtk=g.atk||0;
+    // 佛修不用凡兵
+    const canUseBuddhist=r.isBuddhist&&!g.buddhist;
+    if(canUseBuddhist){
+      useMsg=`，但${r.name}婉拒了（佛门不受此物）`;
+    }else if(!r.weapon||newAtk>myAtk){
+      r.weapon={name:g.name,atk:g.atk||0,def:g.def||0,desc:g.desc};
+      useMsg=`，${r.name}当即换上了${g.name}`;
+    }else{
+      useMsg=`，${r.name}觉得不如自己的${r.weapon.name}，便收了起来`;
+    }
+  }else if(g.type==='acc'){
+    // 简单：放空槽或用新装备
+    if(!r.acc1){r.acc1={name:g.name,atk:g.atk||0,def:g.def||0,hp:g.hp||0,mp:g.mp||0,dodge:g.dodge||0,crit:g.crit||0,desc:g.desc};useMsg=`，${r.name}当即戴上了${g.name}`;}
+    else useMsg=`，${r.name}收下了`;
+  }else if(g.type==='consume'||g.type==='dish'){
+    let used='';
+    r.maxHp=r.maxHp||100;r.hp=r.hp||r.maxHp;
+    if(g.heal){const b=r.hp;r.hp=Math.min(r.maxHp,r.hp+g.heal);if(r.hp>b)used+=`气血+${r.hp-b} `;}
+    if(g.mana){used+=`灵力+${g.mana} `;}
+    if(g.exp){used+=`修为+${g.exp}`;}
+    useMsg=used?`，${r.name}当场服下（${used.trim()}）`:`，${r.name}收下了`;
+  }else if(g.type==='petEgg'){
+    useMsg=`，${r.name}欢喜地收下了灵兽蛋`;
+  }else{
+    useMsg=`，${r.name}欣然收下`;
+  }
+  player.bag.splice(bagIdx,1);
+  const callName=getNpcCallName(r);
+  log(`【送礼】你赠予 ${r.name}「${g.name}」${useMsg}，好感 +${add}。`,'good');
+  toast(`好感 +${add}`);
+  refreshUI();openRelationships();
+}
+function givePetEgg(npcIdx,eggIdx){
+  const r=player.relations[npcIdx];
+  const eg=player.petEggs[eggIdx];if(!eg)return;
+  const isFav=eg.name===r.favItem;
+  const add=isFav?15:5;
+  r.favor=(r.favor||0)+add;
+  player.petEggs.splice(eggIdx,1);
+  log(`【送礼】你赠予 ${r.name}「${eg.name}」，他/她欢喜收下，好感 +${add}。`,'good');
+  toast(`好感 +${add}`);
+  refreshUI();openRelationships();
+}
 function removeNpc(i){const r=player.relations[i];if(!confirm(`确定要与 ${r.name} 断交吗？`))return;player.relations.splice(i,1);log(`【因缘录】与 ${r.name} 断交。`,'system');openRelationships()}
 
 /* ========== 角色状态 ========== */
 function openCharacterSheet(){const need=getExpNeeded();const pct=Math.min(100,player.exp/need*100);const nick=getNickname();let html=`<div class="modal-title">角 色 状 态</div><div class="bio-name-row">${getFullName()}${nick?` <span style="font-size:14px;color:#8b7355;font-weight:normal;">（小名：${nick}）</span>`:''}</div><div class="bio-dao-row">道 号 · ${getDao()||'未取'}</div><div class="bio-realm-row">境 界 · ${getRealmName()}</div><div class="bio-stat-grid"><div class="bio-stat-item"><div class="lbl">气 血</div><div class="val hp">${Math.max(0,player.hp)}/${player.maxHp}</div></div><div class="bio-stat-item"><div class="lbl">灵 力</div><div class="val mp">${Math.max(0,player.mp)}/${player.maxMp}</div></div><div class="bio-stat-item"><div class="lbl">攻 击</div><div class="val">${player.atk}</div></div><div class="bio-stat-item"><div class="lbl">防 御</div><div class="val">${player.def}</div></div><div class="bio-stat-item"><div class="lbl">敏 捷</div><div class="val agi">${player.agility}</div></div><div class="bio-stat-item"><div class="lbl">闪 避</div><div class="val">${player.dodge}%</div></div><div class="bio-stat-item"><div class="lbl">暴 击</div><div class="val crit">${player.crit}%</div></div><div class="bio-stat-item"><div class="lbl">暴 伤</div><div class="val crit">${player.critDmg}%</div></div><div class="bio-stat-item"><div class="lbl">厨 艺</div><div class="val">${player.cooking}</div></div><div class="bio-stat-item"><div class="lbl">灵 石</div><div class="val">${player.gold}</div></div><div class="bio-stat-item"><div class="lbl">战 力</div><div class="val">${calcPower(player)}</div></div><div class="bio-stat-item"><div class="lbl">天 数</div><div class="val">${player.day} 天</div></div></div><div class="section-label">随 身 装 备</div><div class="bio-equip-grid">${[{label:'武 器',item:player.weapon},{label:'饰 品 一',item:player.acc1},{label:'饰 品 二',item:player.acc2},{label:'灵 兽',item:player.pet}].map(eq=>{const filled=eq.item?'filled':'';const val=eq.item?`${eq.item.icon||''} ${eq.item.name}`:'— 空 —';return `<div class="bio-equip-item ${filled}"><div class="slot-lbl">${eq.label}</div><div class="slot-val">${val}</div></div>`}).join('')}</div>`;if(player.skills&&player.skills.length>0){html+=`<div class="section-label">修 习 功 法</div><div class="item-list">`;player.skills.forEach(sk=>{const q=SKILL_QUALITY[sk.quality];const typeLabel=sk.type==='passive'?'被动':'主动';html+=`<div class="item-entry"><div><div class="item-name">${sk.name} <span style="color:${q.color};font-size:11px;">${q.name}·${sk.tier}阶${sk.level}级</span> <span style="color:#8b7355;font-size:11px;">${typeLabel}</span></div><div class="item-desc">${getSkillEffectStr(sk)}</div></div></div>`});html+=`</div>`}html+=`<div class="bio-exp-bar"><div class="bio-exp-label"><span>修 为 进 度</span><span>${player.exp} / ${need}</span></div><div class="exp-bar-bg"><div class="exp-bar-fill" style="width:${pct}%"></div></div></div><button class="modal-close" onclick="closeModal()">关 闭</button>`;showModal(html)}
 
 /* ========== 修习功法 ========== */
-function openSkills(){let html=`<div class="modal-title">修 习 功 法</div>`;if(!player.skills||player.skills.length===0){html+=`<div style="text-align:center;color:#8b7355;padding:24px;">尚未修习任何功法</div>`}else{player.skills.forEach(sk=>{const q=SKILL_QUALITY[sk.quality];const maxTier=q.maxTier;const typeLabel=sk.type==='passive'?'被动':'主动';const typeCls=sk.type==='passive'?'passive':'active';const isMaxTier=sk.tier>=maxTier&&sk.level>=10;const cost=200*sk.level*(1+(sk.tier-1)*.5);const canUp=player.gold>=cost&&!isMaxTier&&sk.level<10;html+=`<div class="skill-card"><div class="skill-head"><span class="skill-name">${sk.name}</span><span class="skill-tier-tag" style="color:${q.color};border-color:${q.color};">${q.name}·${sk.tier}阶</span><span class="skill-tier-tag">Lv.${sk.level}/10</span><span class="skill-type ${typeCls}">${typeLabel}</span></div><div class="skill-desc">${sk.desc}</div><div class="skill-effect">${getSkillEffectStr(sk)}</div>${isMaxTier?`<div style="font-size:12px;color:#a67c00;letter-spacing:2px;font-weight:bold;">✦ 已 修 至 圆 满 ✦</div>`:(sk.level<10?`<button class="skill-upgrade" ${canUp?'':'disabled'} onclick="upgradeSkillLevel('${sk.id}')">修习（${cost} 灵石）</button>`:`<div style="font-size:11px;color:#8b7355;">需用同阶秘籍升阶</div>`)}</div>`})}html+=`<button class="modal-close" onclick="closeModal()">关 闭</button>`;showModal(html)}
+function openSkills(){let html=`<div class="modal-title">修 习 功 法</div><div style="text-align:center;margin-bottom:10px;">${goldBadge()}</div>`;if(!player.skills||player.skills.length===0){html+=`<div style="text-align:center;color:#8b7355;padding:24px;">尚未修习任何功法</div>`}else{player.skills.forEach(sk=>{const q=SKILL_QUALITY[sk.quality];const maxTier=q.maxTier;const typeLabel=sk.type==='passive'?'被动':'主动';const typeCls=sk.type==='passive'?'passive':'active';const isMaxTier=sk.tier>=maxTier&&sk.level>=10;const cost=200*sk.level*(1+(sk.tier-1)*.5);const canUp=player.gold>=cost&&!isMaxTier&&sk.level<10;html+=`<div class="skill-card"><div class="skill-head"><span class="skill-name">${sk.name}</span><span class="skill-tier-tag" style="color:${q.color};border-color:${q.color};">${q.name}·${sk.tier}阶</span><span class="skill-tier-tag">Lv.${sk.level}/10</span><span class="skill-type ${typeCls}">${typeLabel}</span></div><div class="skill-desc">${sk.desc}</div><div class="skill-effect">${getSkillEffectStr(sk)}</div>${isMaxTier?`<div style="font-size:12px;color:#a67c00;letter-spacing:2px;font-weight:bold;">✦ 已 修 至 圆 满 ✦</div>`:(sk.level<10?`<button class="skill-upgrade" ${canUp?'':'disabled'} onclick="upgradeSkillLevel('${sk.id}')">修习（${cost} 灵石）${canUp?'':' — 灵石不足'}</button>`:`<div style="font-size:11px;color:#8b7355;">需用同阶秘籍升阶</div>`)}</div>`})}html+=`<button class="modal-close" onclick="closeModal()">关 闭</button>`;showModal(html)}
 function upgradeSkillLevel(skillId){const sk=player.skills.find(s=>s.id===skillId);if(!sk)return;if(sk.level>=10){toast('当前阶已满');return}const cost=200*sk.level*(1+(sk.tier-1)*.5);if(player.gold<cost){toast('灵石不足');return}player.gold-=cost;const oldB=calcSkillBonus(sk);sk.level++;if(sk.type==='passive'){const newB=calcSkillBonus(sk);player.atk+=newB.atk-oldB.atk;player.def+=newB.def-oldB.def}log(`【功法】「${sk.name}」升至 ${sk.tier}阶${sk.level}级。`,'good');toast(`${sk.name} ${sk.tier}阶${sk.level}级`);refreshUI();openSkills()}
 
 /* ========== 存档 ========== */
 function initSaves(){try{const raw=localStorage.getItem(STORAGE_KEY);saveSlots=raw?JSON.parse(raw):new Array(MANUAL_SLOTS).fill(null)}catch{saveSlots=new Array(MANUAL_SLOTS).fill(null)}if(!Array.isArray(saveSlots)||saveSlots.length<MANUAL_SLOTS){const t=new Array(MANUAL_SLOTS).fill(null);if(Array.isArray(saveSlots))for(let i=0;i<Math.min(saveSlots.length,MANUAL_SLOTS);i++)t[i]=saveSlots[i];saveSlots=t}}
 function saveToSlot(slotIndex){if(!player)return;const data=JSON.parse(JSON.stringify(player));data._saveTime=new Date().toLocaleString('zh-CN');if(slotIndex===AUTO_SLOT)localStorage.setItem(AUTO_KEY,JSON.stringify(data));else{saveSlots[slotIndex-1]=data;localStorage.setItem(STORAGE_KEY,JSON.stringify(saveSlots))}toast('存档成功')}
-function loadFromSlot(slotIndex){let data;if(slotIndex===AUTO_SLOT){const raw=localStorage.getItem(AUTO_KEY);if(!raw){toast('无自动存档');return}data=JSON.parse(raw)}else{if(!saveSlots[slotIndex-1]){toast('空存档位');return}data=saveSlots[slotIndex-1]}const def=defaultPlayer();for(const k in def)if(data[k]===undefined)data[k]=def[k];if(!data.name)data.name={sur:'',given:'',dao:'',nickname:''};if(data.name.dao===undefined)data.name.dao='';if(data.name.nickname===undefined)data.name.nickname='';if(!Array.isArray(data.skills))data.skills=[];if(!Array.isArray(data.relations))data.relations=[];if(!Array.isArray(data.petEggs))data.petEggs=[];if(typeof data.cooking!=='number')data.cooking=0;player=data;refreshUI();closeModal();toast('读档成功')}
+function loadFromSlot(slotIndex){let data;if(slotIndex===AUTO_SLOT){const raw=localStorage.getItem(AUTO_KEY);if(!raw){toast('无自动存档');return}data=JSON.parse(raw)}else{if(!saveSlots[slotIndex-1]){toast('空存档位');return}data=saveSlots[slotIndex-1]}const def=defaultPlayer();for(const k in def)if(data[k]===undefined)data[k]=def[k];if(!data.name)data.name={sur:'',given:'',dao:'',nickname:''};if(data.name.dao===undefined)data.name.dao='';if(data.name.nickname===undefined)data.name.nickname='';if(!Array.isArray(data.skills))data.skills=[];if(!Array.isArray(data.relations))data.relations=[];if(!Array.isArray(data.petEggs))data.petEggs=[];if(typeof data.cooking!=='number')data.cooking=0;if(!Array.isArray(data.shopXinfaStock)||data.shopXinfaStock.length===0){const s=initShopSkillStock();data.shopXinfaStock=s.xinfaStock;data.shopJianfaStock=s.jianfaStock}player=data;refreshUI();closeModal();toast('读档成功')}
 function deleteSlot(slotIndex){if(slotIndex===AUTO_SLOT)localStorage.removeItem(AUTO_KEY);else{saveSlots[slotIndex-1]=null;localStorage.setItem(STORAGE_KEY,JSON.stringify(saveSlots))}openSavePanel()}
 function autoSave(){saveToSlot(AUTO_SLOT)}
 function openSavePanel(){let html=`<div class="modal-title">存 档 · 读 档</div>`;const autoRaw=localStorage.getItem(AUTO_KEY);let autoData=null;try{autoData=autoRaw?JSON.parse(autoRaw):null}catch{}html+=`<div class="save-slot auto"><div class="slot-info"><div class="slot-title">📁 自动存档</div><div class="slot-detail">${autoData?`${autoData._saveTime||'—'} · ${getRealmName(autoData.realmIndex)} · 第 ${autoData.day||1} 天`:'暂无'}</div></div><div class="slot-actions">${autoData?`<button onclick="loadFromSlot(0)">读 档</button>`:''}${autoData?`<button onclick="deleteSlot(0);openSavePanel();">删 除</button>`:''}</div></div>`;for(let i=0;i<MANUAL_SLOTS;i++){const d=saveSlots[i];html+=`<div class="save-slot"><div class="slot-info"><div class="slot-title">存档位 ${i+1}</div><div class="slot-detail">${d?`${d._saveTime||'—'} · ${getRealmName(d.realmIndex)} · 第 ${d.day||1} 天`:'空'}</div></div><div class="slot-actions"><button onclick="saveToSlot(${i+1});openSavePanel();">存 档</button>${d?`<button onclick="loadFromSlot(${i+1})">读 档</button>`:''}${d?`<button onclick="deleteSlot(${i+1});openSavePanel();">删 除</button>`:''}</div></div>`}html+=`<button class="modal-close" onclick="closeModal()">关 闭</button>`;showModal(html)}
@@ -747,15 +878,13 @@ function openAdmin(){if(!adminUnlocked){let html=`<div class="modal-title">天 �
 function adminLogin(){const u=document.getElementById('adminUser').value.trim();const p=document.getElementById('adminPass').value.trim();if(u==='001'&&p==='123456'){adminUnlocked=true;toast('天道已连接');renderAdminPanel()}else document.getElementById('adminErr').textContent='账号或密码错误'}
 function renderAdminPanel(){const allSects=[...SECTS_TOP,...SECTS_MID,...SECTS_LOW];let html=`<div class="modal-title">天 道 系 统</div><div style="font-size:11px;color:#8b7355;text-align:center;margin-bottom:14px;">修改后点击「应用」生效</div><div class="admin-form"><div class="admin-row"><label>姓 名</label><input type="text" id="admName" value="${getFullName()}" maxlength="6"></div><div class="admin-row"><label>道 号</label><input type="text" id="admDao" value="${getDao()}" maxlength="6"></div><div class="admin-row"><label>小 名</label><input type="text" id="admNick" value="${getNickname()}" maxlength="4"></div><div class="admin-row"><label>修 为</label><input type="number" id="admExp" value="${player.exp}"></div><div class="admin-row"><label>境界序号</label><input type="number" id="admRealm" value="${player.realmIndex}" min="0" max="${REALMS.length-1}"></div><div class="admin-row"><label>气血</label><input type="number" id="admHp" value="${player.hp}"></div><div class="admin-row"><label>气血上限</label><input type="number" id="admMaxHp" value="${player.maxHp}"></div><div class="admin-row"><label>灵力</label><input type="number" id="admMp" value="${player.mp}"></div><div class="admin-row"><label>灵力上限</label><input type="number" id="admMaxMp" value="${player.maxMp}"></div><div class="admin-row"><label>攻 击</label><input type="number" id="admAtk" value="${player.atk}"></div><div class="admin-row"><label>防 御</label><input type="number" id="admDef" value="${player.def}"></div><div class="admin-row"><label>敏 捷</label><input type="number" id="admAgility" value="${player.agility}"></div><div class="admin-row"><label>闪避%</label><input type="number" id="admDodge" value="${player.dodge}"></div><div class="admin-row"><label>暴击%</label><input type="number" id="admCrit" value="${player.crit}"></div><div class="admin-row"><label>暴伤%</label><input type="number" id="admCritDmg" value="${player.critDmg}"></div><div class="admin-row"><label>厨艺</label><input type="number" id="admCooking" value="${player.cooking}"></div><div class="admin-row"><label>修炼加成%</label><input type="number" id="admCult" value="${Math.floor((player.cultivateBonus||0)*100)}"></div><div class="admin-row"><label>灵 石</label><input type="number" id="admGold" value="${player.gold}"></div><div class="admin-row"><label>天 数</label><input type="number" id="admDay" value="${player.day}"></div><div class="admin-row"><label>时辰0-11</label><input type="number" id="admShichen" value="${player.shichenIndex}" min="0" max="11"></div><button class="admin-submit" onclick="applyAdmin()">应 用 修 改</button></div>
 
-  <div style="margin-top:14px;border-top:1px solid #d8cbb0;padding-top:12px;"><div style="font-size:12px;color:#8b7355;margin-bottom:8px;">━ 快速操作 ━</div><div class="quick-actions"><button onclick="adminGrant('exp',10000)">+1万修为</button><button onclick="adminGrant('exp',1000000)">+100万修为</button><button onclick="adminGrant('gold',10000)">+1万灵石</button><button onclick="adminGrant('gold',1000000)">+100万灵石</button><button onclick="adminFull()">回满状态</button><button onclick="adminUnlockAllSecrets()">解锁全部秘境</button></div></div>
+  <div style="margin-top:14px;border-top:1px solid #d8cbb0;padding-top:12px;"><div style="font-size:12px;color:#8b7355;margin-bottom:8px;">━ 快速操作 ━</div><div class="quick-actions"><button onclick="adminGrant('exp',10000)">+1万修为</button><button onclick="adminGrant('exp',1000000)">+100万修为</button><button onclick="adminGrant('gold',10000)">+1万灵石</button><button onclick="adminGrant('gold',1000000)">+100万灵石</button><button onclick="adminFull()">回满状态</button><button onclick="adminUnlockAllSecrets()">解锁全部秘境</button><button onclick="adminRefreshShopStock()">刷新商店功法库存</button></div></div>
 
-  <div style="margin-top:14px;border-top:1px solid #d8cbb0;padding-top:12px;"><div style="font-size:12px;color:#8b7355;margin-bottom:8px;">━ 添加物品 ━</div><div class="admin-row"><label>类别</label><select id="admItemCategory" onchange="updateItemOptions()"><option value="weapon">武器</option><option value="acc">饰品</option><option value="consume">丹药</option><option value="breakthrough">突破丹</option><option value="gift">礼品</option><option value="ingredient">食材</option><option value="dish">菜肴</option></select></div><div class="admin-row"><label>物品</label><select id="admItemName"></select></div><div class="admin-row"><label>数量</label><input type="number" id="admItemCount" value="1" min="1"></div><button class="admin-submit" onclick="adminAddItem2()">添 加 物 品</button></div>
+  <div style="margin-top:14px;border-top:1px solid #d8cbb0;padding-top:12px;"><div style="font-size:12px;color:#8b7355;margin-bottom:8px;">━ 添加物品 ━</div><div class="admin-row"><label>类别</label><select id="admItemCategory" onchange="updateItemOptions()"><option value="weapon">武器</option><option value="buddhist">佛器</option><option value="acc">饰品</option><option value="consume">丹药</option><option value="breakthrough">突破丹</option><option value="gift">礼品</option><option value="ingredient">食材</option><option value="dish">菜肴</option></select></div><div class="admin-row"><label>物品</label><select id="admItemName"></select></div><div class="admin-row"><label>数量</label><input type="number" id="admItemCount" value="1" min="1"></div><button class="admin-submit" onclick="adminAddItem2()">添 加 物 品</button></div>
 
   <div style="margin-top:14px;border-top:1px solid #d8cbb0;padding-top:12px;"><div style="font-size:12px;color:#8b7355;margin-bottom:8px;">━ 添加秘籍 ━</div><div class="admin-row"><label>类型</label><select id="admBookType"><option value="xinfa">心法</option><option value="jianfa">剑法</option></select></div><div class="admin-row"><label>品阶</label><select id="admBookQuality" onchange="updateBookOptions()"><option value="common">凡品</option><option value="mid">中品</option><option value="high">上品</option><option value="supreme">极品</option></select></div><div class="admin-row"><label>阶数</label><select id="admBookTier"><option value="1">1阶</option><option value="2">2阶</option><option value="3">3阶</option><option value="4">4阶</option><option value="5">5阶</option></select></div><div class="admin-row"><label>数量</label><input type="number" id="admBookCount" value="1" min="1"></div><button class="admin-submit" onclick="adminAddSkillBook()">添 加 秘 籍</button></div>
 
   <div style="margin-top:14px;border-top:1px solid #d8cbb0;padding-top:12px;"><div style="font-size:12px;color:#8b7355;margin-bottom:8px;">━ 添加灵兽蛋 ━</div><div class="admin-row"><label>灵兽</label><select id="admPetType">${Object.keys(PET_SPECIES).map(k=>`<option value="${k}">${PET_SPECIES[k].icon} ${PET_SPECIES[k].name}（${PET_QUALITY_INFO[PET_SPECIES[k].quality].name}）</option>`).join('')}</select></div><div class="admin-row"><label>数量</label><input type="number" id="admPetCount" value="1" min="1"></div><div class="admin-row"><label>性别</label><select id="admPetGender"><option>公</option><option>母</option></select></div><button class="admin-submit" onclick="adminAddPetEgg()">添 加 灵 兽 蛋</button></div>
-
-  <div style="margin-top:14px;border-top:1px solid #d8cbb0;padding-top:12px;"><div style="font-size:12px;color:#8b7355;margin-bottom:8px;">━ 直接拉满功法 ━</div><div class="admin-row"><label>功法</label><select id="admMaxSkill">${player.skills.map(s=>`<option value="${s.id}">${s.name}（${SKILL_QUALITY[s.quality].name}·${s.tier}阶${s.level}级）</option>`).join('')}</select></div><button class="admin-submit" onclick="adminMaxSkill()">直 接 拉 满</button></div>
 
   <div style="margin-top:14px;border-top:1px solid #d8cbb0;padding-top:12px;"><div style="font-size:12px;color:#8b7355;margin-bottom:8px;">━ 灵兽直接设置 ━</div><div class="admin-row"><label>灵兽类型</label><select id="admSetPetType">${Object.keys(PET_SPECIES).map(k=>`<option value="${k}">${PET_SPECIES[k].name}</option>`).join('')}</select></div><div class="admin-row"><label>道号</label><input type="text" id="admSetPetDao" placeholder="自定义灵兽道号" maxlength="8"></div><div class="admin-row"><label>妖修境界0-10</label><input type="number" id="admSetPetRealm" value="5" min="0" max="10"></div><div class="admin-row"><label>好感</label><input type="number" id="admSetPetFavor" value="100"></div><div class="admin-row"><label>性别</label><select id="admSetPetGender"><option>公</option><option>母</option></select></div><div class="admin-row"><label>喜好菜</label><select id="admSetPetFavDish">${RECIPE_DB.map(r=>`<option>${r.name}</option>`).join('')}</select></div><div class="admin-row"><label>喜好物品</label><select id="admSetPetFavItem">${GIFT_DB.map(g=>`<option>${g.name}</option>`).join('')}</select></div><button class="admin-submit" onclick="adminSetPet()">设 置 灵 兽</button></div>
 
@@ -763,7 +892,7 @@ function renderAdminPanel(){const allSects=[...SECTS_TOP,...SECTS_MID,...SECTS_L
 
   <button class="modal-close" onclick="closeModal()">关 闭</button>`;showModal(html);updateItemOptions();updatePositionOptions()}
 
-function updateItemOptions(){const cat=document.getElementById('admItemCategory').value;const sel=document.getElementById('admItemName');if(!sel)return;let opts='';if(cat==='weapon'){['普通铁剑','精铁长剑','青云剑','玄铁重剑'].forEach(n=>opts+=`<option value="${n}">${n}</option>`)}else if(cat==='acc'){['狼牙护符','灵猴玉佩','护心铜镜','疾风铃','幽魂精魄'].forEach(n=>opts+=`<option value="${n}">${n}</option>`)}else if(cat==='consume'){['粗制灵草','解毒丹','回春散','聚气散','回春丹','聚气丹'].forEach(n=>opts+=`<option value="${n}">${n}</option>`)}else if(cat==='breakthrough'){['破障丹','凝神丹','天机丹'].forEach(n=>opts+=`<option value="${n}">${n}</option>`)}else if(cat==='gift'){GIFT_DB.forEach(g=>opts+=`<option value="${g.name}">${g.name}</option>`)}else if(cat==='ingredient'){Object.keys(INGREDIENT_DB).forEach(n=>opts+=`<option value="${n}">${n}</option>`)}else if(cat==='dish'){RECIPE_DB.forEach(r=>opts+=`<option value="${r.name}">${r.name}</option>`)}sel.innerHTML=opts}
+function updateItemOptions(){const cat=document.getElementById('admItemCategory').value;const sel=document.getElementById('admItemName');if(!sel)return;let opts='';if(cat==='weapon'){['普通铁剑','精铁长剑','青云剑','玄铁重剑'].forEach(n=>opts+=`<option value="${n}">${n}</option>`)}else if(cat==='buddhist'){['禅杖','念珠','降魔杵','金钵','菩提念珠'].forEach(n=>opts+=`<option value="${n}">${n}</option>`)}else if(cat==='acc'){['狼牙护符','灵猴玉佩','护心铜镜','疾风铃','幽魂精魄'].forEach(n=>opts+=`<option value="${n}">${n}</option>`)}else if(cat==='consume'){['粗制灵草','解毒丹','回春散','聚气散','回春丹','聚气丹','小还丹','大还丹','聚灵丹','悟道丹'].forEach(n=>opts+=`<option value="${n}">${n}</option>`)}else if(cat==='breakthrough'){['破障丹','凝神丹','天机丹'].forEach(n=>opts+=`<option value="${n}">${n}</option>`)}else if(cat==='gift'){GIFT_DB.forEach(g=>opts+=`<option value="${g.name}">${g.name}</option>`)}else if(cat==='ingredient'){Object.keys(INGREDIENT_DB).forEach(n=>opts+=`<option value="${n}">${n}</option>`)}else if(cat==='dish'){RECIPE_DB.forEach(r=>opts+=`<option value="${r.name}">${r.name}</option>`)}sel.innerHTML=opts}
 function updateBookOptions(){const quality=document.getElementById('admBookQuality').value;const tierSel=document.getElementById('admBookTier');const maxT=SKILL_QUALITY[quality].maxTier;let opts='';for(let i=1;i<=Math.min(maxT,5);i++)opts+=`<option value="${i}">${i}阶</option>`;tierSel.innerHTML=opts}
 function updatePositionOptions(){const sectName=document.getElementById('admNpcSect').value;const sel=document.getElementById('admNpcPos');if(!sel)return;let positions=['散修'];const sect=[...SECTS_TOP,...SECTS_MID,...SECTS_LOW].find(s=>s.name===sectName);if(sect)positions=sect.positions;sel.innerHTML=positions.map(p=>`<option value="${p}">${p}</option>`).join('')}
 
@@ -771,10 +900,10 @@ function applyAdmin(){const val=(id)=>parseInt(document.getElementById(id).value
 function adminGrant(type,amount){if(type==='exp')player.exp+=amount;else if(type==='gold')player.gold+=amount;refreshUI();toast('已发放');renderAdminPanel()}
 function adminFull(){player.hp=player.maxHp;player.mp=player.maxMp;refreshUI();toast('已回满');renderAdminPanel()}
 function adminUnlockAllSecrets(){['low','mid','high','top'].forEach(t=>REALMS_LIST[t].forEach(r=>r.unlocked=true));toast('已解锁全部秘境');renderAdminPanel()}
-function adminAddItem2(){const cat=document.getElementById('admItemCategory').value;const name=document.getElementById('admItemName').value;const count=Math.max(1,parseInt(document.getElementById('admItemCount').value)||1);if(cat==='weapon'||cat==='acc'||cat==='consume'||cat==='breakthrough'){const base=ITEM_DB[name];if(!base){toast('物品不存在');return}for(let i=0;i<count;i++)player.bag.push({...base,id:genId(),sellPrice:Math.floor((base.price||20)*.5)})}else if(cat==='gift'){const g=GIFT_DB.find(x=>x.name===name);if(!g){toast('物品不存在');return}for(let i=0;i<count;i++)player.bag.push({type:'gift',name:g.name,desc:'赠礼',price:g.price,id:genId(),sellPrice:Math.floor(g.price*.5)})}else if(cat==='ingredient'){const price=INGREDIENT_DB[name];if(!price){toast('食材不存在');return}for(let i=0;i<count;i++)player.bag.push({type:'ingredient',name,desc:'烹饪食材。',id:genId(),sellPrice:Math.floor(price*.3)})}else if(cat==='dish'){const r=RECIPE_DB.find(x=>x.name===name);if(!r){toast('菜肴不存在');return}for(let i=0;i<count;i++)player.bag.push(dishToItem(r))}toast(`已添加 ${name}×${count}`);renderAdminPanel()}
+function adminRefreshShopStock(){const s=initShopSkillStock();player.shopXinfaStock=s.xinfaStock;player.shopJianfaStock=s.jianfaStock;toast('商店功法库存已刷新');renderAdminPanel()}
+function adminAddItem2(){const cat=document.getElementById('admItemCategory').value;const name=document.getElementById('admItemName').value;const count=Math.max(1,parseInt(document.getElementById('admItemCount').value)||1);if(cat==='weapon'||cat==='buddhist'||cat==='acc'||cat==='consume'||cat==='breakthrough'){const base=ITEM_DB[name];if(!base){toast('物品不存在');return}for(let i=0;i<count;i++)player.bag.push({...base,id:genId(),sellPrice:Math.floor((base.price||20)*.5)})}else if(cat==='gift'){const g=GIFT_DB.find(x=>x.name===name);if(!g){toast('物品不存在');return}for(let i=0;i<count;i++)player.bag.push({type:'gift',name:g.name,desc:'赠礼',price:g.price,id:genId(),sellPrice:Math.floor(g.price*.5)})}else if(cat==='ingredient'){const price=INGREDIENT_DB[name];if(!price){toast('食材不存在');return}for(let i=0;i<count;i++)player.bag.push({type:'ingredient',name,desc:'烹饪食材。',id:genId(),sellPrice:Math.floor(price*.3)})}else if(cat==='dish'){const r=RECIPE_DB.find(x=>x.name===name);if(!r){toast('菜肴不存在');return}for(let i=0;i<count;i++)player.bag.push(dishToItem(r))}toast(`已添加 ${name}×${count}`);renderAdminPanel()}
 function adminAddSkillBook(){const type=document.getElementById('admBookType').value;const quality=document.getElementById('admBookQuality').value;const tier=Math.max(1,parseInt(document.getElementById('admBookTier').value)||1);const count=Math.max(1,parseInt(document.getElementById('admBookCount').value)||1);for(let i=0;i<count;i++){const sk=type==='xinfa'?createXinfa(tier,quality):createJianfa(tier,quality);const itemName=`${sk.name}·秘（${SKILL_QUALITY[quality].name}）`;player.bag.push({id:genId(),type:'skillbook',skillId:sk.id,bookTier:tier,skillData:sk,name:itemName,desc:`修习或提升「${sk.name}」`,price:600*tier,sellPrice:300*tier})}toast(`已添加秘籍×${count}`);renderAdminPanel()}
 function adminAddPetEgg(){const petType=document.getElementById('admPetType').value;const count=Math.max(1,parseInt(document.getElementById('admPetCount').value)||1);const gender=document.getElementById('admPetGender').value;const pet=PET_SPECIES[petType];const q=pet.quality;for(let i=0;i<count;i++){player.petEggs.push({id:genId(),type:'petEgg',petType,name:`${pet.name}蛋`,desc:`可孵化出${pet.name}。品质：${PET_QUALITY_INFO[q].name}`,icon:pet.icon,quality:q,gender,remainingHours:pet.hatchTime,readyToHatch:false,sellPrice:Math.floor(pet.hatchTime*2)})}toast(`已添加 ${pet.name}蛋×${count}`);renderAdminPanel()}
-function adminMaxSkill(){const skillId=document.getElementById('admMaxSkill').value;const sk=player.skills.find(s=>s.id===skillId);if(!sk){toast('功法不存在');return}const q=SKILL_QUALITY[sk.quality];const maxTier=q.maxTier;const oldB=calcSkillBonus(sk);sk.tier=maxTier;sk.level=10;if(sk.type==='passive'){const newB=calcSkillBonus(sk);player.atk+=newB.atk-oldB.atk;player.def+=newB.def-oldB.def}log(`【天道】${sk.name}拉满（${sk.tier}阶10级）`,'good');toast('已拉满');refreshUI();renderAdminPanel()}
 function adminSetPet(){const petType=document.getElementById('admSetPetType').value;const dao=document.getElementById('admSetPetDao').value.trim();const yaoRealm=parseInt(document.getElementById('admSetPetRealm').value)||0;const favor=parseInt(document.getElementById('admSetPetFavor').value)||100;const gender=document.getElementById('admSetPetGender').value;const favDish=document.getElementById('admSetPetFavDish').value;const favItem=document.getElementById('admSetPetFavItem').value;const pet=PET_SPECIES[petType];const q=pet.quality;const qMult=PET_QUALITY_INFO[q].mult;const yaoBase=pet.yaoBase||{hp:60,atk:8,def:4,agi:12,mp:30};const petObj={id:genId(),type:'pet',name:pet.name,icon:pet.icon,desc:pet.desc,stat:pet.stat,value:pet.value,quality:q,gender,dao:dao||`${pet.name}灵修`,yaoRealm,yaoExp:0,maxHp:Math.floor(yaoBase.hp*qMult),hp:Math.floor(yaoBase.hp*qMult),maxMp:Math.floor(yaoBase.mp*qMult),mp:Math.floor(yaoBase.mp*qMult),atk:Math.floor(yaoBase.atk*qMult),def:Math.floor(yaoBase.def*qMult),agility:yaoBase.agi,favor,favDish,favItem};if(pet.critDmg)petObj.critDmg=pet.critDmg;if(player.pet)player.bag.push(player.pet);player.pet=petObj;toast(`已设置灵兽：${pet.name}`);refreshUI();renderAdminPanel()}
 function adminAddNpc(){let name=document.getElementById('admNpcName').value.trim();let dao=document.getElementById('admNpcDao').value.trim();const gender=document.getElementById('admNpcGender').value;const sect=document.getElementById('admNpcSect').value||'散修';const position=document.getElementById('admNpcPos').value||'散修';const isYao=document.getElementById('admNpcIsYao').value==='true';const buddhist=isBuddhist(sect);const favDish=document.getElementById('admNpcFavDish').value||pickRandom(RECIPE_DB).name;const favItem=document.getElementById('admNpcFavItem').value||pickRandom(GIFT_DB).name;if(!name){const surnames=['李','王','张','刘','陈','赵','周','吴','孙','杨','沈','白','云','萧','林','洛'];const names=['青云','逍遥','天行','无痕','清霜','墨白','流风','惊鸿','落月','星河','若虚','明远'];name=pickRandom(surnames)+pickRandom(names)}if(!dao){const daos=['剑客','真人','散人','上人','道人','仙子','居士','老祖','尊者','灵修'];dao=pickRandom(daos)+name.slice(-1)}const val=(id)=>parseInt(document.getElementById(id).value)||0;const npc={id:genId(),name,dao,gender:buddhist?'男':gender,sect,position,desc:`${sect}的${position}。`,favor:50,isYao,isBuddhist:buddhist,favDish,favItem,realmIndex:val('admNpcRealm'),atk:val('admNpcAtk'),def:val('admNpcDef'),maxHp:val('admNpcHp'),agility:val('admNpcAgi'),dodge:val('admNpcDodge'),crit:val('admNpcCrit'),critDmg:150,weapon:{name:'青锋剑',atk:15,desc:'随身佩剑。'},acc1:null,acc2:null,pet:null};player.relations.push(npc);log(`【天道】结识 ${name}（${dao}）。`,'good');toast(`已结识 ${name}`);renderAdminPanel()}
 
@@ -799,7 +928,7 @@ function confirmName(){const sur=document.getElementById('nameSur').value.trim()
 
 /* ========== 启动 ========== */
 function startGame(){localStorage.setItem(STORY_KEY,'1');showNameModal()}
-function initGame(nameData){document.getElementById('game').style.display='block';initSaves();const autoRaw=localStorage.getItem(AUTO_KEY);let loaded=false;if(autoRaw){try{const data=JSON.parse(autoRaw);const def=defaultPlayer();for(const k in def)if(data[k]===undefined)data[k]=def[k];if(typeof data.shichenIndex!=='number'||data.shichenIndex<0||data.shichenIndex>11)data.shichenIndex=getRealShichenIndex();if(!data.name)data.name={sur:'',given:'',dao:'',nickname:''};if(data.name.dao===undefined)data.name.dao='';if(data.name.nickname===undefined)data.name.nickname='';if(!Array.isArray(data.skills))data.skills=[];if(!Array.isArray(data.relations))data.relations=[];if(!Array.isArray(data.petEggs))data.petEggs=[];if(typeof data.cooking!=='number')data.cooking=0;player=data;loaded=true}catch(e){}}if(!loaded){player=defaultPlayer();if(nameData)player.name=nameData;else{const savedName=localStorage.getItem(NAME_KEY);if(savedName){try{player.name=JSON.parse(savedName)}catch{}}if(!player.name.dao)player.name.dao='';if(!player.name.nickname)player.name.nickname=''}grantNewbiePack()}else if(nameData){if(!player.name.sur&&!player.name.given&&!player.name.dao)player.name=nameData}refreshUI();if(loaded)log(`【系统】读取存档成功，第 ${player.day} 天继续修行。`,'system');else log(`【修仙世界】${getDisplayName()}，第 ${player.day} 天，一切从零开始。`,'system');autoSave()}
+function initGame(nameData){document.getElementById('game').style.display='block';initSaves();const autoRaw=localStorage.getItem(AUTO_KEY);let loaded=false;if(autoRaw){try{const data=JSON.parse(autoRaw);const def=defaultPlayer();for(const k in def)if(data[k]===undefined)data[k]=def[k];if(typeof data.shichenIndex!=='number'||data.shichenIndex<0||data.shichenIndex>11)data.shichenIndex=getRealShichenIndex();if(!data.name)data.name={sur:'',given:'',dao:'',nickname:''};if(data.name.dao===undefined)data.name.dao='';if(data.name.nickname===undefined)data.name.nickname='';if(!Array.isArray(data.skills))data.skills=[];if(!Array.isArray(data.relations))data.relations=[];if(!Array.isArray(data.petEggs))data.petEggs=[];if(typeof data.cooking!=='number')data.cooking=0;if(!Array.isArray(data.shopXinfaStock)||data.shopXinfaStock.length===0){const s=initShopSkillStock();data.shopXinfaStock=s.xinfaStock;data.shopJianfaStock=s.jianfaStock}player=data;loaded=true}catch(e){}}if(!loaded){player=defaultPlayer();if(nameData)player.name=nameData;else{const savedName=localStorage.getItem(NAME_KEY);if(savedName){try{player.name=JSON.parse(savedName)}catch{}}if(!player.name.dao)player.name.dao='';if(!player.name.nickname)player.name.nickname=''}grantNewbiePack()}else if(nameData){if(!player.name.sur&&!player.name.given&&!player.name.dao)player.name=nameData}refreshUI();if(loaded)log(`【系统】读取存档成功，第 ${player.day} 天继续修行。`,'system');else log(`【修仙世界】${getDisplayName()}，第 ${player.day} 天，一切从零开始。`,'system');autoSave()}
 
 /* ========== 持久化 ========== */
 window.addEventListener('beforeunload',function(){if(!player)return;try{const data=JSON.parse(JSON.stringify(player));data._saveTime=new Date().toLocaleString('zh-CN');localStorage.setItem(AUTO_KEY,JSON.stringify(data))}catch{}});
