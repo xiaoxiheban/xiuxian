@@ -485,6 +485,7 @@ function getNickname(){return(player&&player.name&&player.name.nickname)||''}
 function getDisplayName(){const f=getFullName(),d=getDao();return d?`${f}（${d}）`:f}
 function getPlayerTitle(){return getDao()||getFullName()||'道友'}
 function getNpcCallName(npc){const favor=npc.favor||0;const nick=getNickname();if(favor>=60&&nick)return nick;if(favor>=30)return getDao()||getFullName()||'道友';return'道友'}
+
 function toast(msg,d=2000){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._timer);t._timer=setTimeout(()=>t.classList.remove('show'),d)}
 function log(msg,type=''){const p=document.getElementById('logPanel');const d=document.createElement('div');d.className='log-entry '+type;d.textContent=msg;p.appendChild(d);p.scrollTop=p.scrollHeight;while(p.children.length>150)p.removeChild(p.firstChild)}
 function calcPower(o){const atk=o.atk||0,def=o.def||0,mhp=o.maxHp||o.hp||1,agi=o.agility||10;return Math.floor(atk*3+def*2+mhp/5+agi*2)}
@@ -1971,6 +1972,7 @@ function openAdmin(){
 function adminLogin(){const u=document.getElementById('adminUser').value.trim();const p=document.getElementById('adminPass').value.trim();if(u==='001'&&p==='123456'){adminUnlocked=true;toast('天道已连接');renderAdminPanel()}else document.getElementById('adminErr').textContent='账号或密码错误'}
 function renderAdminPanel(){
   const rd=getRootDisplay();const pd=getPhysiqueDisplay();
+  const allSects=[...SECTS_TOP,...SECTS_MID,...SECTS_LOW];
   let html=`<div class="modal-title">天 道 系 统</div><div style="font-size:11px;color:#8b7355;text-align:center;margin-bottom:14px;">当前灵根：<b style="color:${rd.color};">${rd.name}</b> · 当前体质：<b style="color:${pd.color};">${pd.name}</b></div>
   <div class="admin-form">
     <div class="admin-row"><label>姓 名</label><input type="text" id="admName" value="${getFullName()}" maxlength="6"></div>
@@ -2002,6 +2004,7 @@ function renderAdminPanel(){
     <div class="admin-row"><label>时辰0-11</label><input type="number" id="admShichen" value="${player.shichenIndex}" min="0" max="11"></div>
     <button class="admin-submit" onclick="applyAdmin()">应 用 修 改</button>
   </div>
+
   <div style="margin-top:14px;border-top:1px solid #d8cbb0;padding-top:12px;">
     <div style="font-size:12px;color:#8b7355;margin-bottom:8px;">━ 快速操作 ━</div>
     <div class="quick-actions">
@@ -2014,15 +2017,296 @@ function renderAdminPanel(){
       <button onclick="adminUnlockAllSecrets()">解锁全部秘境</button>
       <button onclick="adminRefreshPills()">重置丹药</button>
       <button onclick="adminAddAllHerbs()">全灵草各10个</button>
-      <button onclick="adminAddItemByName('千年灵根果')">+千年灵根果</button>
-      <button onclick="adminAddItemByName('混沌种子')">+混沌种子</button>
-      <button onclick="adminAddItemByName('净毒药水')">+净毒药水</button>
-      <button onclick="adminAddItemByName('化形丹')">+化形丹</button>
-      <button onclick="adminAddItemByName('易名符')">+易名符</button>
     </div>
   </div>
+
+  <div style="margin-top:14px;border-top:1px solid #d8cbb0;padding-top:12px;">
+    <div style="font-size:12px;color:#8b7355;margin-bottom:8px;">━ 添加物品（分类选择） ━</div>
+    <div class="admin-row"><label>类别</label><select id="admItemCategory" onchange="updateItemOptions()">
+      <option value="weapon">武器</option>
+      <option value="buddhist">佛器</option>
+      <option value="acc">饰品</option>
+      <option value="herb">灵草</option>
+      <option value="gift">礼品</option>
+      <option value="ingredient">食材</option>
+      <option value="dish">菜肴</option>
+      <option value="tool">杂项（灵根/体质/化形等）</option>
+    </select></div>
+    <div class="admin-row"><label>物品</label><select id="admItemName"></select></div>
+    <div class="admin-row"><label>数量</label><input type="number" id="admItemCount" value="1" min="1"></div>
+    <button class="admin-submit" onclick="adminAddItem2()">添 加 物 品</button>
+  </div>
+
+  <div style="margin-top:14px;border-top:1px solid #d8cbb0;padding-top:12px;">
+    <div style="font-size:12px;color:#8b7355;margin-bottom:8px;">━ 添加丹药 ━</div>
+    <div class="admin-row"><label>品级</label><select id="admPillQuality" onchange="updatePillOptions()">
+      <option value="common">下品</option>
+      <option value="mid">中品</option>
+      <option value="high">上品</option>
+      <option value="supreme">顶级</option>
+      <option value="heal_common">治疗下品</option>
+      <option value="heal_mid">治疗中品</option>
+      <option value="heal_high">治疗上品</option>
+    </select></div>
+    <div class="admin-row"><label>丹药</label><select id="admPillName"></select></div>
+    <div class="admin-row"><label>数量</label><input type="number" id="admPillCount" value="1" min="1"></div>
+    <button class="admin-submit" onclick="adminAddPills()">添 加 丹 药</button>
+  </div>
+
+  <div style="margin-top:14px;border-top:1px solid #d8cbb0;padding-top:12px;">
+    <div style="font-size:12px;color:#8b7355;margin-bottom:8px;">━ 添加秘籍 ━</div>
+    <div class="admin-row"><label>类型</label><select id="admBookType"><option value="xinfa">心法</option><option value="jianfa">剑法</option></select></div>
+    <div class="admin-row"><label>品阶</label><select id="admBookQuality" onchange="updateBookTierOptions()">
+      <option value="common">凡品</option><option value="mid">中品</option><option value="high">上品</option><option value="supreme">极品</option>
+    </select></div>
+    <div class="admin-row"><label>阶数</label><select id="admBookTier"><option value="1">1阶</option><option value="2">2阶</option><option value="3">3阶</option></select></div>
+    <div class="admin-row"><label>数量</label><input type="number" id="admBookCount" value="1" min="1"></div>
+    <button class="admin-submit" onclick="adminAddSkillBook()">添 加 秘 籍</button>
+  </div>
+
+  <div style="margin-top:14px;border-top:1px solid #d8cbb0;padding-top:12px;">
+    <div style="font-size:12px;color:#8b7355;margin-bottom:8px;">━ 添加灵宠蛋 ━</div>
+    <div class="admin-row"><label>类型</label><select id="admPetType">${Object.keys(PET_SPECIES).map(k=>`<option value="${k}">${PET_SPECIES[k].icon} ${PET_SPECIES[k].name}</option>`).join('')}</select></div>
+    <div class="admin-row"><label>性别</label><select id="admPetGender"><option>公</option><option>母</option></select></div>
+    <div class="admin-row"><label>品阶</label><select id="admPetQuality">
+      <option value="">随机</option>
+      <option value="common">凡品</option><option value="mid">中品</option><option value="high">上品</option><option value="supreme">极品</option>
+    </select></div>
+    <div class="admin-row"><label>数量</label><input type="number" id="admPetCount" value="1" min="1"></div>
+    <button class="admin-submit" onclick="adminAddPetEgg()">添 加 灵 宠 蛋</button>
+  </div>
+
+  <div style="margin-top:14px;border-top:1px solid #d8cbb0;padding-top:12px;">
+    <div style="font-size:12px;color:#8b7355;margin-bottom:8px;">━ 直接设置灵兽（出战位） ━</div>
+    <div class="admin-row"><label>类型</label><select id="admSetPetType">${Object.keys(PET_SPECIES).map(k=>`<option value="${k}">${PET_SPECIES[k].name}</option>`).join('')}</select></div>
+    <div class="admin-row"><label>道号</label><input type="text" id="admSetPetDao" placeholder="留空用默认" maxlength="8"></div>
+    <div class="admin-row"><label>品阶</label><select id="admSetPetQuality">
+      <option value="common">凡品</option><option value="mid">中品</option><option value="high">上品</option><option value="supreme" selected>极品</option>
+    </select></div>
+    <div class="admin-row"><label>性别</label><select id="admSetPetGender"><option>公</option><option>母</option></select></div>
+    <div class="admin-row"><label>妖修境界0-10</label><input type="number" id="admSetPetRealm" value="5" min="0" max="10"></div>
+    <div class="admin-row"><label>好感</label><input type="number" id="admSetPetFavor" value="100"></div>
+    <div class="admin-row"><label>喜好菜</label><select id="admSetPetFavDish">${RECIPE_DB.map(r=>`<option>${r.name}</option>`).join('')}</select></div>
+    <div class="admin-row"><label>喜好物品</label><select id="admSetPetFavItem">${GIFT_DB.map(g=>`<option>${g.name}</option>`).join('')}</select></div>
+    <button class="admin-submit" onclick="adminSetPet()">设 置 灵 兽</button>
+  </div>
+
+  <div style="margin-top:14px;border-top:1px solid #d8cbb0;padding-top:12px;">
+    <div style="font-size:12px;color:#8b7355;margin-bottom:8px;">━ 指定结识道友 ━</div>
+    <div class="admin-row"><label>姓名</label><input type="text" id="admNpcName" placeholder="留空随机" maxlength="8"></div>
+    <div class="admin-row"><label>道号</label><input type="text" id="admNpcDao" placeholder="留空随机" maxlength="8"></div>
+    <div class="admin-row"><label>性别</label><select id="admNpcGender"><option>男</option><option>女</option><option>未知</option></select></div>
+    <div class="admin-row"><label>门派</label><select id="admNpcSect" onchange="updatePositionOptions()">
+      <option value="散修">散修</option>
+      ${allSects.map(s=>`<option value="${s.name}">${s.name}（${s.rank}）</option>`).join('')}
+    </select></div>
+    <div class="admin-row"><label>职位</label><select id="admNpcPos"><option>散修</option></select></div>
+    <div class="admin-row"><label>是否妖修</label><select id="admNpcIsYao"><option value="false">否</option><option value="true">是</option></select></div>
+    <div class="admin-row"><label>境界序号</label><input type="number" id="admNpcRealm" value="10" min="0" max="${REALMS.length-1}"></div>
+    <div class="admin-row"><label>攻击</label><input type="number" id="admNpcAtk" value="30"></div>
+    <div class="admin-row"><label>防御</label><input type="number" id="admNpcDef" value="15"></div>
+    <div class="admin-row"><label>气血</label><input type="number" id="admNpcHp" value="200"></div>
+    <div class="admin-row"><label>敏捷</label><input type="number" id="admNpcAgi" value="12"></div>
+    <div class="admin-row"><label>闪避%</label><input type="number" id="admNpcDodge" value="10"></div>
+    <div class="admin-row"><label>暴击%</label><input type="number" id="admNpcCrit" value="8"></div>
+    <div class="admin-row"><label>喜好菜</label><select id="admNpcFavDish">${RECIPE_DB.map(r=>`<option>${r.name}</option>`).join('')}</select></div>
+    <div class="admin-row"><label>喜好物品</label><select id="admNpcFavItem">${GIFT_DB.map(g=>`<option>${g.name}</option>`).join('')}</select></div>
+    <button class="admin-submit" onclick="adminAddNpc()">添 加 道 友</button>
+  </div>
+
   <button class="modal-close" onclick="closeModal()">关 闭</button>`;
   showModal(html);
+  updateItemOptions();
+  updatePillOptions();
+  updatePositionOptions();
+}
+/* ===== 天道后台辅助函数 ===== */
+const INGREDIENT_DB_LOCAL={大米:1,青菜:2,猪肉:3,鸡肉:3,鱼:3,牛肉:4,鸭肉:5,虾仁:5,蟹肉:6,豆腐:2,灵果:8,灵兽肉:12,灵芝:15,人参:12,红枣:2,莲子:2,银耳:2,枸杞:2,菊花:1,茶叶:2,灵茶:6,桂花:3,蜂蜜:4,雪莲:20,灵泉水:4};
+
+function updateItemOptions(){
+  const cat=document.getElementById('admItemCategory').value;
+  const sel=document.getElementById('admItemName');if(!sel)return;
+  let opts='';
+  if(cat==='weapon')['普通铁剑','精铁长剑','青云剑','玄铁重剑'].forEach(n=>opts+=`<option value="${n}">${n}</option>`);
+  else if(cat==='buddhist')['禅杖','念珠','降魔杵','金钵','菩提念珠'].forEach(n=>opts+=`<option value="${n}">${n}</option>`);
+  else if(cat==='acc')['狼牙护符','灵猴玉佩','护心铜镜','疾风铃','幽魂精魄'].forEach(n=>opts+=`<option value="${n}">${n}</option>`);
+  else if(cat==='herb')HERB_LIST.forEach(n=>opts+=`<option value="${n}">${n}</option>`);
+  else if(cat==='gift')GIFT_DB.forEach(g=>opts+=`<option value="${g.name}">${g.name}</option>`);
+  else if(cat==='ingredient')Object.keys(INGREDIENT_DB_LOCAL).forEach(n=>opts+=`<option value="${n}">${n}</option>`);
+  else if(cat==='dish')RECIPE_DB.forEach(r=>opts+=`<option value="${r.name}">${r.name}</option>`);
+  else if(cat==='tool')['易名符','化形丹','净毒药水','千年灵根果','混沌种子','改髓丹'].forEach(n=>opts+=`<option value="${n}">${n}</option>`);
+  sel.innerHTML=opts;
+}
+
+function updatePillOptions(){
+  const q=document.getElementById('admPillQuality').value;
+  const sel=document.getElementById('admPillName');if(!sel)return;
+  const pool=(player.pillDB&&player.pillDB[q])||[];
+  sel.innerHTML=pool.map(p=>`<option value="${p.id}">${p.name} - ${p.desc}</option>`).join('');
+}
+
+function updateBookTierOptions(){
+  const q=document.getElementById('admBookQuality').value;
+  const t=document.getElementById('admBookTier');if(!t)return;
+  const maxT=Math.min(SKILL_QUALITY[q].maxTier,5);
+  let opts='';for(let i=1;i<=maxT;i++)opts+=`<option value="${i}">${i}阶</option>`;
+  t.innerHTML=opts;
+}
+
+function updatePositionOptions(){
+  const sectName=document.getElementById('admNpcSect').value;
+  const sel=document.getElementById('admNpcPos');if(!sel)return;
+  let positions=['散修'];
+  const sect=[...SECTS_TOP,...SECTS_MID,...SECTS_LOW].find(s=>s.name===sectName);
+  if(sect)positions=sect.positions;
+  sel.innerHTML=positions.map(p=>`<option value="${p}">${p}</option>`).join('');
+}
+
+function adminAddItem2(){
+  const cat=document.getElementById('admItemCategory').value;
+  const name=document.getElementById('admItemName').value;
+  const count=Math.max(1,parseInt(document.getElementById('admItemCount').value)||1);
+  if(cat==='weapon'||cat==='buddhist'||cat==='acc'){
+    const base=ITEM_DB[name];if(!base){toast('物品不存在');return}
+    for(let i=0;i<count;i++)player.bag.push({...base,id:genId(),sellPrice:Math.floor((base.price||20)*.5)});
+  }else if(cat==='herb'){
+    const price=HERB_DB[name];if(!price){toast('灵草不存在');return}
+    for(let i=0;i<count;i++)player.bag.push({id:genId(),type:'herb',name,desc:'炼丹灵草。',sellPrice:Math.floor(price*.3),price});
+  }else if(cat==='gift'){
+    const g=GIFT_DB.find(x=>x.name===name);if(!g){toast('物品不存在');return}
+    for(let i=0;i<count;i++)player.bag.push({type:'gift',name:g.name,desc:'赠礼',price:g.price,id:genId(),sellPrice:Math.floor(g.price*.5)});
+  }else if(cat==='ingredient'){
+    const price=INGREDIENT_DB_LOCAL[name];if(!price){toast('食材不存在');return}
+    for(let i=0;i<count;i++)player.bag.push({id:genId(),type:'ingredient',name,desc:'烹饪食材。',sellPrice:Math.floor(price*.3)});
+  }else if(cat==='dish'){
+    const r=RECIPE_DB.find(x=>x.name===name);if(!r){toast('菜肴不存在');return}
+    for(let i=0;i<count;i++)player.bag.push({id:genId(),type:'dish',name:r.name,desc:r.desc,heal:r.effect==='hp'?r.value:0,mana:r.effect==='mp'?r.value:0,sellPrice:Math.floor(r.dishPrice*.5)});
+  }else if(cat==='tool'){
+    const base=ITEM_DB[name];if(!base){toast('物品不存在');return}
+    for(let i=0;i<count;i++)player.bag.push({...base,id:genId(),sellPrice:Math.floor((base.price||20)*.5)});
+  }
+  toast(`已添加 ${name}×${count}`);
+  renderAdminPanel();
+}
+
+function adminAddPills(){
+  const q=document.getElementById('admPillQuality').value;
+  const pid=document.getElementById('admPillName').value;
+  const count=Math.max(1,parseInt(document.getElementById('admPillCount').value)||1);
+  const pool=(player.pillDB&&player.pillDB[q])||[];
+  const pill=pool.find(p=>p.id===pid);
+  if(!pill){toast('丹药不存在');return}
+  for(let i=0;i<count;i++){
+    player.bag.push({
+      id:genId(),type:'consume',name:pill.name,desc:pill.desc,
+      effect:{...pill.effect},
+      heal:pill.effect.heal||0,mana:pill.effect.mana||0,exp:pill.effect.exp||0,
+      bonus:pill.effect.bonus||0,maxHp:pill.effect.maxHp||0,maxMp:pill.effect.maxMp||0,
+      atk:pill.effect.atk||0,def:pill.effect.def||0,dodge:pill.effect.dodge||0,
+      sellPrice:pill.sellPrice,price:pill.buyPrice,tox:pill.tox||0
+    });
+  }
+  toast(`已添加 ${pill.name}×${count}`);
+  renderAdminPanel();
+}
+
+function adminAddSkillBook(){
+  const type=document.getElementById('admBookType').value;
+  const q=document.getElementById('admBookQuality').value;
+  const tier=Math.max(1,parseInt(document.getElementById('admBookTier').value)||1);
+  const count=Math.max(1,parseInt(document.getElementById('admBookCount').value)||1);
+  for(let i=0;i<count;i++){
+    const sk=type==='xinfa'?createXinfa(tier,q):createJianfa(tier,q);
+    player.bag.push({
+      id:genId(),type:'skillbook',skillId:sk.id,bookTier:tier,skillData:sk,
+      name:`${sk.name}·秘（${SKILL_QUALITY[q].name}）`,
+      desc:`修习或提升「${sk.name}」`,
+      price:600*tier,sellPrice:300*tier
+    });
+  }
+  toast(`已添加秘籍×${count}`);
+  renderAdminPanel();
+}
+
+function adminAddPetEgg(){
+  const petType=document.getElementById('admPetType').value;
+  const gender=document.getElementById('admPetGender').value;
+  const fq=document.getElementById('admPetQuality').value;
+  const count=Math.max(1,parseInt(document.getElementById('admPetCount').value)||1);
+  for(let i=0;i<count;i++){
+    const pet=genPetFromSpecies(petType,gender,fq||undefined);
+    player.petEggs.push({
+      id:genId(),type:'petEgg',petType,speciesKey:petType,
+      name:`${pet.name}蛋`,
+      desc:`可孵化出${pet.name}。品质：${PET_QUALITY_INFO[pet.quality].name}`,
+      icon:pet.icon,quality:pet.quality,gender:pet.gender,
+      remainingHours:PET_SPECIES[petType].hatchTime,
+      readyToHatch:false,sellPrice:Math.floor(PET_SPECIES[petType].hatchTime*2)
+    });
+  }
+  toast(`已添加灵宠蛋×${count}`);
+  renderAdminPanel();
+}
+
+function adminSetPet(){
+  const petType=document.getElementById('admSetPetType').value;
+  const dao=document.getElementById('admSetPetDao').value.trim();
+  const quality=document.getElementById('admSetPetQuality').value;
+  const gender=document.getElementById('admSetPetGender').value;
+  const yaoRealm=Math.max(0,Math.min(10,parseInt(document.getElementById('admSetPetRealm').value)||0));
+  const favor=parseInt(document.getElementById('admSetPetFavor').value)||100;
+  const favDish=document.getElementById('admSetPetFavDish').value;
+  const favItem=document.getElementById('admSetPetFavItem').value;
+  const pet=genPetFromSpecies(petType,gender,quality);
+  pet.dao=dao||`${pet.name}灵修`;
+  pet.yaoRealm=yaoRealm;
+  pet.favor=favor;
+  pet.favDish=favDish;
+  pet.favItem=favItem;
+  if(player.pet)player.bag.push(player.pet);
+  player.pet=pet;
+  toast(`已设置灵兽：${pet.name}`);
+  refreshUI();renderAdminPanel();
+}
+
+function adminAddNpc(){
+  let name=document.getElementById('admNpcName').value.trim();
+  let dao=document.getElementById('admNpcDao').value.trim();
+  const gender=document.getElementById('admNpcGender').value;
+  const sect=document.getElementById('admNpcSect').value||'散修';
+  const position=document.getElementById('admNpcPos').value||'散修';
+  const isYao=document.getElementById('admNpcIsYao').value==='true';
+  const buddhist=isBuddhist(sect);
+  const favDish=document.getElementById('admNpcFavDish').value||pickRandom(RECIPE_DB).name;
+  const favItem=document.getElementById('admNpcFavItem').value||pickRandom(GIFT_DB).name;
+  if(!name){
+    const sn=['李','王','张','刘','陈','赵','周','吴','孙','杨','沈','白','云','萧','林','洛'];
+    const gn=['青云','逍遥','天行','无痕','清霜','墨白','流风','惊鸿','落月','星河','若虚','明远'];
+    name=pickRandom(sn)+pickRandom(gn);
+  }
+  if(!dao){
+    const dt=['剑客','真人','散人','上人','道人','仙子','居士','老祖','尊者','灵修'];
+    dao=pickRandom(dt)+name.slice(-1);
+  }
+  const v=(id)=>parseInt(document.getElementById(id).value)||0;
+  const npc={
+    id:genId(),name,dao,gender:buddhist?'男':gender,sect,position,
+    desc:`${sect}的${position}。`,favor:50,isYao,isBuddhist:buddhist,
+    favDish,favItem,
+    realmIndex:v('admNpcRealm'),
+    atk:v('admNpcAtk'),def:v('admNpcDef'),maxHp:v('admNpcHp'),
+    agility:v('admNpcAgi'),dodge:v('admNpcDodge'),crit:v('admNpcCrit'),
+    critDmg:150,
+    weapon:{name:'青锋剑',atk:15,desc:'随身佩剑。'},
+    acc1:null,acc2:null,pet:null,
+    spiritRoot:rollSpiritRoot(v('admNpcRealm')),
+    physique:rollPhysique(v('admNpcRealm')),
+    appearance:70,talent:70
+  };
+  player.relations.push(npc);
+  log(`【天道】结识 ${name}（${dao}）。`,'good');
+  toast(`已结识 ${name}`);
+  renderAdminPanel();
 }
 function applyAdmin(){
   const v=(id)=>parseInt(document.getElementById(id).value)||0;
